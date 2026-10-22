@@ -144,6 +144,23 @@ fieldset{border:0;padding:0;display:grid;gap:var(--s2)}legend{font:600 var(--t-s
 .md>:first-child{margin-top:0}.md p+p,.md p+ul,.md ul{margin-top:.4em}.md ul{padding-left:1.2em}
 .item .md{color:var(--muted);font-size:var(--t-s);overflow-wrap:anywhere}.item .qb p{color:var(--text);font-size:var(--t-m);font-weight:600}
 .pv{padding-left:var(--s5);font-size:var(--t-s)}dialog textarea{min-height:120px}
+
+/* ===== Emojis SVG integrados (sin archivos externos) ===== */
+.emo{display:inline-block;flex:none}.emo svg{width:100%;height:100%}
+[class^="emo-"]{display:block;overflow:visible}
+.emo-pregunta .a{transform-box:view-box;transform-origin:32px 40px;animation:emo-sway 2.6s ease-in-out infinite}
+@keyframes emo-sway{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)}}
+.emo-respuesta .h{transform-box:fill-box;transform-origin:center;animation:emo-halo 2.8s ease-in-out infinite}
+.emo-respuesta .l{animation:emo-lit 2.8s ease-in-out infinite}
+@keyframes emo-lit{0%{opacity:.15}22%{opacity:1}60%{opacity:.8}80%{opacity:1}100%{opacity:.15}}
+@keyframes emo-halo{0%{opacity:0;transform:scale(.6)}22%{opacity:.75;transform:scale(1.2)}60%{opacity:.5;transform:scale(1)}80%{opacity:.7;transform:scale(1.12)}100%{opacity:0;transform:scale(.6)}}
+.emo-dificil .d{animation:emo-drip 2s ease-in infinite}
+@keyframes emo-drip{0%{opacity:0;transform:translateY(-4px)}15%{opacity:1;transform:translateY(0)}75%{opacity:1;transform:translateY(12px)}100%{opacity:0;transform:translateY(18px)}}
+.emo-regular .a{transform-box:fill-box;transform-origin:center;animation:emo-blink 3s ease-in-out infinite}
+@keyframes emo-blink{0%,82%,100%{transform:scaleY(1)}90%,93%{transform:scaleY(.1)}}
+.emo-facil .a{transform-box:view-box;transform-origin:32px 64px;animation:emo-hop 1.8s ease-in-out infinite}
+@keyframes emo-hop{0%,100%{transform:translateY(0) scale(1,1)}15%{transform:translateY(0) scale(1.06,.93)}45%{transform:translateY(-4px) scale(.97,1.04)}75%{transform:translateY(0) scale(1.03,.97)}}
+@media (prefers-reduced-motion:reduce){[class^="emo-"] *{animation:none!important}}
 </style></head><body>
 <a class="skip" href="#main">Saltar al contenido</a>
 <div class="app">
@@ -418,9 +435,18 @@ function viewToday(root){const p=plan(),n=p.due.length+p.fresh.length,dv=deck===
   y.length?el('div',{class:'panel'},el('h2',{},'Calentamiento de 5 minutos'),el('p',{class:'mut',style:'margin-bottom:12px'},`${y.length} ${y.length===1?'fallo':'fallos'} de ayer.`),btn('Empezar calentamiento',()=>start(shuffle(y.map(c=>c.id)),{min:5,title:'Calentamiento'}),'pri')):null,
   el('div',{style:'height:16px'}),goalBar(reviewsOn(dayKey(new Date()))))}
 const FB={again:['dificil','Otra vez'],hard:['regular','Difícil'],good:['facil','Bien'],easy:['facil','Fácil']};
+
+/* ===== Emojis integrados (SVG inline, reemplazan a assets/emojis/*.gif) ===== */
+const EMOS={
+pregunta:`<svg class="emo-pregunta" viewBox="0 0 64 64" width="40" height="40" role="img" aria-label="Pensando"><g class="a"><circle cx="32" cy="40" r="24" fill="#FFCA28" stroke="#F2A900" stroke-width="1.2"/><ellipse cx="23" cy="37" rx="5" ry="5.5" fill="#fff"/><ellipse cx="41" cy="37" rx="5" ry="5.5" fill="#fff"/><circle cx="25" cy="35.5" r="2.4" fill="#4E342E"/><circle cx="43" cy="35.5" r="2.4" fill="#4E342E"/><g fill="none" stroke="#4E342E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M16 30Q22 28.5 28 30"/><path d="M35 26Q41 21.5 48 25"/><path d="M20 51Q25 49 31 51"/></g><path d="M35 53Q35 47 41 47H50Q56 47 56 53V57Q56 63 50 63H41Q35 63 35 57Z" fill="#FFCA28" stroke="#E5A000" stroke-width="1.4"/><path d="M44 52H53M44 57.5H53" fill="none" stroke="#E5A000" stroke-width="1.4" stroke-linecap="round"/></g></svg>`,
+respuesta:`<svg class="emo-respuesta" viewBox="0 0 64 64" width="40" height="40" role="img" aria-label="Idea"><circle class="h" cx="32" cy="7" r="9" fill="#FFD54F" opacity=".55"/><circle cx="32" cy="40" r="24" fill="#FFCA28" stroke="#F2A900" stroke-width="1.2"/><ellipse cx="23" cy="37" rx="5.5" ry="6.5" fill="#fff"/><ellipse cx="41" cy="37" rx="5.5" ry="6.5" fill="#fff"/><circle cx="23.5" cy="35" r="3" fill="#4E342E"/><circle cx="40.5" cy="35" r="3" fill="#4E342E"/><g fill="none" stroke="#4E342E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M16 27Q22 23.5 28 27"/><path d="M36 27Q42 23.5 48 27"/><path d="M25 49Q32 56 39 49"/></g><path d="M32 1A6 6 0 0 1 36 11.5V13H28V11.5A6 6 0 0 1 32 1Z" fill="#CFD8DC"/><g class="l"><path d="M32 1A6 6 0 0 1 36 11.5V13H28V11.5A6 6 0 0 1 32 1Z" fill="#FFEB3B"/><path d="M30.5 4.5Q28.8 6 29.2 8.5" fill="none" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/><path d="M30.5 11.5L31.5 8L32.5 10L33.5 8L34.5 11.5" fill="none" stroke="#F9A825" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 4.5L18 3M20.5 8L17 8.5M43 4.5L46 3M43.5 8L47 8.5" fill="none" stroke="#FFB300" stroke-width="1.4" stroke-linecap="round"/></g><rect x="28.5" y="13" width="7" height="3" rx="1" fill="#90A4AE"/></svg>`,
+dificil:`<svg class="emo-dificil" viewBox="0 0 64 64" width="40" height="40" role="img" aria-label="Difícil"><circle cx="32" cy="40" r="24" fill="#FFCA28" stroke="#F2A900" stroke-width="1.2"/><g fill="none" stroke="#4E342E" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 31L28 36L16 41"/><path d="M48 31L36 36L48 41"/><path d="M22 53Q27 46 32 51Q37 56 43 48"/></g><g class="d"><path d="M50 12.5C50 12.5 44.5 19 44.5 23a5.5 5.5 0 0 0 11 0C55.5 19 50 12.5 50 12.5Z" fill="#4FC3F7" stroke="#0288D1" stroke-width=".8"/><circle cx="48" cy="23.5" r="1.3" fill="#fff" opacity=".75"/></g></svg>`,
+regular:`<svg class="emo-regular" viewBox="0 0 64 64" width="40" height="40" role="img" aria-label="Regular"><circle cx="32" cy="40" r="24" fill="#FFCA28" stroke="#F2A900" stroke-width="1.2"/><g class="a" fill="#4E342E"><ellipse cx="23" cy="38" rx="3.2" ry="4.2"/><ellipse cx="41" cy="38" rx="3.2" ry="4.2"/></g><g fill="none" stroke="#4E342E" stroke-width="2.4" stroke-linecap="round"><path d="M17 29H28M36 29H47"/><path d="M24 51H40"/></g></svg>`,
+facil:`<svg class="emo-facil" viewBox="0 0 64 64" width="40" height="40" role="img" aria-label="Fácil"><g class="a"><circle cx="32" cy="40" r="24" fill="#FFCA28" stroke="#F2A900" stroke-width="1.2"/><g fill="none" stroke="#4E342E" stroke-width="2.8" stroke-linecap="round"><path d="M16 39Q22 29 28 39"/><path d="M36 39Q42 29 48 39"/></g><path d="M19 46H45Q45 59 32 59Q19 59 19 46Z" fill="#4E342E"/><ellipse cx="32" cy="55" rx="6" ry="3" fill="#E57373"/><rect x="21" y="46" width="22" height="3.5" rx="1" fill="#fff"/></g></svg>`};
+function emoSpan(n,size){const w=el('span',{class:'emo',style:`width:${size}px;height:${size}px`});w.innerHTML=EMOS[n]||'';return w}
 function viewSession(root){const c=current(),pct=session.done/session.total*100,fill=el('i',{style:`width:${prevPct}%`}),rep=!!(session.st[c.id]&&session.st[c.id].n);
  const face=(cls,gif,...kids)=>el('article',{class:'face '+cls,...(cls==='back'&&!flipped?{'aria-hidden':'true'}:{}),...(cls==='front'&&flipped?{'aria-hidden':'true'}:{})},
-  el('div',{class:'head'},el('span',{},el('i',{class:'dot'}),key(c),c.failCount>=3?el('b',{class:'bdg'},'terca'):null,c.verify?el('b',{class:'bdg'},'verificar'):null),el('img',{class:'emo',src:`./assets/emojis/${gif}.gif`,alt:'',onerror:e=>e.target.remove()})),...kids);
+  el('div',{class:'head'},el('span',{},el('i',{class:'dot'}),key(c),c.failCount>=3?el('b',{class:'bdg'},'terca'):null,c.verify?el('b',{class:'bdg'},'verificar'):null),emoSpan(gif,40)),...kids);
  const txt=(cls,t)=>el('div',{class:cls+(t.length>160?' long':'')+' md'},...md(t));
  const front=face('front','pregunta',txt('q',c.question),el('p',{class:'hint'},'Toca la tarjeta o pulsa Espacio para ver la respuesta'));
  const back=face('back','respuesta',el('div',{class:'mine',id:'mine',hidden:true},el('small',{},'Tu respuesta'),el('p',{id:'mineT'})),txt('a',c.answer),c.note?el('div',{class:'mine'},el('small',{},'Mi nota'),el('div',{class:'md'},...md(c.note))):null);
@@ -457,7 +483,7 @@ function rate(r){const c=current();if(!c||!flipped||busy)return;busy=true;
  save();s.r[r]++;s.ids.shift();
  if(fail||(st.bad&&st.ok<2))s.ids.splice(Math.min(s.ids.length,4+(Math.random()<.5?1:0)),0,c.id);else s.done++;
  if(s.until&&Date.now()>s.until)s.ids=[];
- const f=$('#fb'),lbl=fail?'vuelve hoy':first?`vuelve en ${fmtInt(days)}`:'refuerzo';f.replaceChildren(el('img',{src:`./assets/emojis/${FB[r][0]}.gif`,alt:'',onerror:e=>e.target.remove()}),el('span',{},`${FB[r][1]} · ${lbl}`));
+ const f=$('#fb'),lbl=fail?'vuelve hoy':first?`vuelve en ${fmtInt(days)}`:'refuerzo';f.replaceChildren(emoSpan(FB[r][0],26),el('span',{},`${FB[r][1]} · ${lbl}`));
  f.hidden=false;f.classList.remove('show');void f.offsetWidth;f.classList.add('show');clearTimeout(fbT);fbT=setTimeout(()=>f.hidden=true,1100);announce(`${FB[r][1]}. ${fail?'Reaparece en esta sesión':first?'Vuelve en '+fmtInt(days):'Bien, refuerzo registrado'}`);
  $('#card').classList.add('out');
  setTimeout(()=>{flipped=false;typed='';busy=false;enter=true;render()},wait(200))}
