@@ -1,47 +1,646 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="light"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#F2EEE4"><title>Ficha · Flashcards</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ===== Tokens ===== */
+:root{color-scheme:light;
+--font-ui:'Hanken Grotesk',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;--font-card:'Fraunces',Georgia,'Times New Roman',serif;
+--t-xs:.8rem;--t-s:.875rem;--t-m:1rem;--t-l:1.25rem;--t-xl:1.563rem;--t-2xl:1.953rem;--t-3xl:2.441rem;
+--s1:4px;--s2:8px;--s3:12px;--s4:16px;--s5:24px;--s6:32px;--s7:48px;--s8:64px;
+--r-s:6px;--r-m:10px;--r-l:16px;--r-full:999px;
+--ease:cubic-bezier(.2,.7,.2,1);--dur-1:120ms;--dur-2:220ms;--dur-3:520ms;
+--hit:44px;--nav-h:60px;--emo:40px;
+--bg:#F2EEE4;--surface:#FBF8F1;--surface-2:#E9E4D6;--line:#D6CFBD;--text:#1D1B16;--muted:#625D50;--accent:#B8381A;--on-accent:#FFFFFF;--focus:#1F5FA8;
+--again:#B3261E;--hard:#8A5A00;--good:#1F6B4A;--easy:#1F5FA8;
+--d0:#B8381A;--d1:#1F5FA8;--d2:#1F6B4A;--d3:#7A3E9D;--d4:#8A5A00;--d5:#0F6E75;--d6:#A12D5C;--d7:#4F5B1B}
+[data-theme=dark]{color-scheme:dark;
+--bg:#13120F;--surface:#1C1A16;--surface-2:#27241E;--line:#3A362C;--text:#EDE8DB;--muted:#A8A18F;--accent:#F0795A;--on-accent:#1A0C07;--focus:#82B4F2;
+--again:#FF8F86;--hard:#E6B450;--good:#6CCB9B;--easy:#82B4F2;
+--d0:#F0795A;--d1:#78AEF2;--d2:#5CC594;--d3:#C79BE6;--d4:#E2B04A;--d5:#4FC3CB;--d6:#EE80AC;--d7:#B4C262}
+/* ===== Base ===== */
+*{box-sizing:border-box;margin:0}
+body{background:var(--bg);color:var(--text);font:400 var(--t-m)/1.5 var(--font-ui);font-variant-numeric:tabular-nums;min-height:100dvh;padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom) + var(--s5))}
+h1{font:600 var(--t-2xl)/1.15 var(--font-card);letter-spacing:-.01em}
+h2{font:600 var(--t-xl)/1.2 var(--font-card)}
+.mut{color:var(--muted)}.eyebrow{display:block;color:var(--muted);font-size:var(--t-s);text-transform:capitalize}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.skip{position:absolute;left:var(--s2);top:-60px;background:var(--surface);padding:var(--s2) var(--s3);border-radius:var(--r-m);z-index:20}.skip:focus{top:var(--s2)}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.app{max-width:760px;margin:0 auto;padding:0 var(--s4)}
+.top{display:flex;align-items:center;justify-content:space-between;height:56px}
+.brand{font:600 var(--t-l) var(--font-card)}.brand i{color:var(--accent);font-style:normal}
+main:focus{outline:0}
+section[hidden]{display:none}
+.bar{display:flex;align-items:flex-end;justify-content:space-between;gap:var(--s3);margin:var(--s3) 0 var(--s4)}
+.row{display:flex;flex-wrap:wrap;gap:var(--s2)}.row.sp{justify-content:space-between;align-items:baseline}
+/* Navegación */
+#nav{position:fixed;left:0;right:0;bottom:0;height:calc(var(--nav-h) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);display:grid;grid-template-columns:repeat(5,1fr);background:var(--surface);border-top:1px solid var(--line);z-index:5}
+.nv{background:none;border:0;color:var(--muted);font:600 var(--t-s) var(--font-ui);min-height:var(--hit);position:relative;cursor:pointer}
+.nv[aria-current=page]{color:var(--text)}
+.nv[aria-current=page]::before{content:'';position:absolute;top:-1px;left:25%;right:25%;height:3px;background:var(--accent);border-radius:0 0 3px 3px}
+/* Controles */
+.btn{min-height:var(--hit);padding:0 var(--s4);border-radius:var(--r-m);border:1px solid var(--line);background:var(--surface);color:var(--text);font:600 var(--t-s) var(--font-ui);cursor:pointer;transition:background var(--dur-1),transform var(--dur-1)}
+.btn:hover{background:var(--surface-2)}.btn:active{transform:translateY(1px)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}.btn.pri:hover{filter:brightness(1.08)}
+.btn.dng{color:var(--again)}.btn.big{min-height:56px;width:100%;font-size:var(--t-m)}.btn[disabled]{opacity:.5;cursor:default}
+.ic{min-width:var(--hit);min-height:var(--hit);border:0;background:none;color:var(--muted);border-radius:var(--r-m);cursor:pointer;font-size:var(--t-l)}.ic:hover{background:var(--surface-2);color:var(--text)}
+kbd{font:600 var(--t-xs) var(--font-ui);border:1px solid currentColor;border-radius:var(--r-s);padding:0 6px;margin-left:var(--s2);opacity:.75}
+@media(hover:none){kbd{display:none}}
+input,textarea,select{width:100%;font:inherit;color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:var(--r-m);padding:var(--s3);min-height:var(--hit)}
+textarea{resize:vertical}input[type=checkbox]{width:22px;height:22px;min-height:0;accent-color:var(--accent)}
+.chips{display:flex;gap:var(--s2);overflow-x:auto;padding:var(--s1) 0 var(--s3);scrollbar-width:none}
+.chip{flex:none;min-height:var(--hit);display:inline-flex;align-items:center;gap:var(--s2);padding:0 var(--s4);border-radius:var(--r-full);border:1px solid var(--line);background:none;color:var(--text);font:500 var(--t-s) var(--font-ui);cursor:pointer}
+.chip[aria-pressed=true]{background:var(--text);color:var(--bg);border-color:var(--text)}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--deck)}
+.bdg{background:var(--accent);color:var(--on-accent);border-radius:var(--r-full);padding:0 7px;font-size:var(--t-xs)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-l);padding:var(--s5);margin-bottom:var(--s4)}
+.panel>h2{font-size:var(--t-l);margin-bottom:var(--s3)}
+.track{height:8px;background:var(--surface-2);border-radius:var(--r-full);overflow:hidden}
+.track i{display:block;height:100%;width:0;background:var(--deck,var(--accent));transition:width var(--dur-3) var(--ease)}
+/* Hoy */
+.today{display:grid;gap:var(--s3);border-top:6px solid var(--deck,var(--accent))}
+.big{font:500 var(--t-3xl)/1 var(--font-card)}
+.goal{display:grid;gap:var(--s2);margin:var(--s2) 0}
+.empty{text-align:center;padding:var(--s7) var(--s4);display:grid;gap:var(--s3);justify-items:center}
+.empty .row{justify-content:center}
+/* Tarjeta */
+.stage{position:relative;perspective:1400px;margin:var(--s5) 0 var(--s4)}
+.card{display:block;cursor:pointer;border-radius:var(--r-l);-webkit-tap-highlight-color:transparent;transition:transform var(--dur-2) var(--ease),opacity var(--dur-2)}
+.card:active{transform:scale(.992)}.card.enter{animation:in var(--dur-2) var(--ease)}.card.out{transform:translateX(-28px);opacity:0}
+@keyframes in{from{transform:translateY(10px);opacity:0}}
+.inner{display:grid;transform-style:preserve-3d;transition:transform var(--dur-3) var(--ease)}
+.flipped .inner{transform:rotateY(180deg)}
+.face{grid-area:1/1;position:relative;overflow:hidden;min-height:min(52dvh,420px);padding:var(--s5);display:flex;flex-direction:column;gap:var(--s4);background:var(--surface);border:1px solid var(--line);border-radius:var(--r-l);backface-visibility:hidden;-webkit-backface-visibility:hidden;box-shadow:0 8px 0 -4px var(--surface-2),0 9px 0 -4px var(--line)}
+.face::before{content:'';position:absolute;inset:0 0 auto;height:6px;background:var(--deck)}
+.back{transform:rotateY(180deg)}
+.head{display:flex;align-items:center;justify-content:space-between;gap:var(--s3);padding-top:var(--s2);padding-bottom:var(--s3);border-bottom:1px solid color-mix(in srgb,var(--deck) 45%,var(--line));font-size:var(--t-s);font-weight:600}
+.head span{display:inline-flex;align-items:center;gap:var(--s2);color:var(--muted)}
+.emo{height:var(--emo);width:auto}
+.q,.a{margin:auto 0;font:500 clamp(1.25rem,1rem + 2vw,var(--t-2xl))/1.3 var(--font-card);white-space:pre-wrap;overflow-wrap:anywhere;text-wrap:balance}
+.a{font-weight:400}.long{font-size:var(--t-l)}
+.hint{color:var(--muted);font-size:var(--t-xs);text-align:center}
+.mine{border-left:3px solid var(--line);padding-left:var(--s3);color:var(--muted);font-size:var(--t-s);white-space:pre-wrap;overflow-wrap:anywhere}
+.dock{position:sticky;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom) + var(--s2));background:var(--bg);padding:var(--s2) 0;display:grid;gap:var(--s2)}
+.stack{display:grid;gap:var(--s2)}.stack[hidden],.rates[hidden]{display:none}
+.rates{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--s2)}
+.rate{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:68px;padding:var(--s2) 2px;background:var(--surface);color:var(--text);border:1px solid var(--line);border-top:4px solid var(--c);border-radius:var(--r-m);font:600 var(--t-s) var(--font-ui);cursor:pointer;transition:transform var(--dur-1),background var(--dur-1)}
+.rate:hover{background:var(--surface-2)}.rate:active{transform:scale(.97)}
+.rate small{font-size:var(--t-xs);color:var(--muted);font-weight:500}
+.rate[data-r=again]{--c:var(--again)}.rate[data-r=hard]{--c:var(--hard)}.rate[data-r=good]{--c:var(--good)}.rate[data-r=easy]{--c:var(--easy)}
+.quiet{display:flex;justify-content:center;gap:var(--s2);flex-wrap:wrap}.quiet .btn{border-color:transparent;background:none;color:var(--muted)}
+.fb{position:fixed;left:50%;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom) + 150px);transform:translateX(-50%);display:flex;align-items:center;gap:var(--s2);background:var(--text);color:var(--bg);padding:var(--s1) var(--s4) var(--s1) var(--s2);border-radius:var(--r-full);font-weight:600;font-size:var(--t-s);z-index:8;pointer-events:none}
+.fb[hidden]{display:none}.fb.show{animation:pop 1.1s var(--ease) forwards}.fb img{height:36px;width:auto}
+@keyframes pop{0%{opacity:0;transform:translate(-50%,10px)}15%,80%{opacity:1;transform:translate(-50%,0)}100%{opacity:0}}
+.stat3{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s3);text-align:center}
+.stat3 b{display:block;font:500 var(--t-2xl)/1.1 var(--font-card)}
+/* Biblioteca */
+.tools{display:flex;gap:var(--s2);flex-wrap:wrap;margin-bottom:var(--s3)}.tools input{flex:1;min-width:200px}
+.bulk{display:flex;gap:var(--s2);flex-wrap:wrap;align-items:center;padding:var(--s3);background:var(--surface-2);border-radius:var(--r-m);margin-bottom:var(--s3)}
+.item{display:grid;grid-template-columns:var(--hit) 1fr auto;align-items:start;gap:var(--s2);padding:var(--s3) 0;border-bottom:1px solid var(--line)}
+.item label{display:grid;place-items:center;min-height:var(--hit)}
+.item b{font-weight:600;overflow-wrap:anywhere}.item p{color:var(--muted);font-size:var(--t-s);overflow-wrap:anywhere;white-space:pre-wrap}
+.tag{display:inline-block;margin:var(--s1) var(--s1) 0 0;font-size:var(--t-xs);padding:1px var(--s2);border-radius:var(--r-s);background:var(--surface-2);color:var(--muted)}
+.prompt{white-space:pre-wrap;font-size:var(--t-s);background:var(--surface-2);padding:var(--s3);border-radius:var(--r-m);margin:var(--s3) 0}
+.msg{padding:var(--s3);border-radius:var(--r-m);margin:var(--s3) 0;border:1px solid;font-size:var(--t-s)}
+.msg.ok{color:var(--good);border-color:var(--good)}.msg.err{color:var(--again);border-color:var(--again)}
+.add textarea{min-height:200px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:var(--t-s)}
+/* Progreso */
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:var(--s3);margin-bottom:var(--s4)}.kpis .panel{margin:0}.kpis .goal{grid-column:1/-1}
+.kpi b{display:block;font:500 var(--t-3xl)/1 var(--font-card)}.kpi span{color:var(--muted);font-size:var(--t-s)}
+.heatwrap{overflow-x:auto;padding-bottom:var(--s2)}
+.heat{display:grid;grid-template-rows:repeat(7,13px);grid-auto-flow:column;grid-auto-columns:13px;gap:3px;width:max-content}
+.cell{border-radius:3px;background:var(--surface-2)}.cell.f{visibility:hidden}
+.cell[data-l="1"]{background:color-mix(in srgb,var(--accent) 30%,var(--surface-2))}.cell[data-l="2"]{background:color-mix(in srgb,var(--accent) 55%,var(--surface-2))}
+.cell[data-l="3"]{background:color-mix(in srgb,var(--accent) 80%,var(--surface-2))}.cell[data-l="4"]{background:var(--accent)}
+.legend{display:flex;align-items:center;gap:3px;font-size:var(--t-xs);color:var(--muted);margin-top:var(--s2)}.legend .cell{width:13px;height:13px}
+.drow{display:grid;gap:var(--s2);padding:var(--s3) 0;border-bottom:1px solid var(--line)}.drow:last-child{border:0}
+.fld{display:grid;gap:var(--s1);margin-bottom:var(--s3);font-size:var(--t-s);font-weight:600}.fld.chk{grid-template-columns:auto 1fr;align-items:center;gap:var(--s3)}
+/* Diálogos, aviso, carga */
+dialog{border:1px solid var(--line);border-radius:var(--r-l);background:var(--surface);color:var(--text);padding:var(--s5);width:min(520px,calc(100vw - 32px))}
+dialog::backdrop{background:rgb(0 0 0/.5)}dialog form{display:grid;gap:var(--s3)}dialog label{display:grid;gap:var(--s1);font-size:var(--t-s);font-weight:600}dialog .row{justify-content:flex-end}
+#toast{position:fixed;left:var(--s4);right:var(--s4);bottom:calc(var(--nav-h) + env(safe-area-inset-bottom) + var(--s3));max-width:460px;margin:0 auto;background:var(--text);color:var(--bg);padding:var(--s2) var(--s4);border-radius:var(--r-m);display:flex;justify-content:space-between;align-items:center;gap:var(--s3);z-index:9}
+#toast[hidden]{display:none}#toast button{background:none;border:0;color:inherit;font:700 var(--t-s) var(--font-ui);text-decoration:underline;min-height:var(--hit);cursor:pointer}
+.skel{height:320px;border-radius:var(--r-l);background:var(--surface-2);animation:sk 1.2s ease-in-out infinite alternate}@keyframes sk{to{opacity:.5}}
+/* Tablet y escritorio */
+@media(min-width:720px){.app{padding:0 var(--s6)}.face{padding:var(--s6) var(--s7)}.kpis{grid-template-columns:repeat(3,1fr)}.kpis .goal{grid-column:auto}}
+@media(min-width:1000px){body{padding:0 0 var(--s7) 220px}
+#nav{inset:0 auto 0 0;width:220px;height:auto;padding:80px var(--s3) 0;grid-template-columns:1fr;grid-auto-rows:var(--hit);align-content:start;border-top:0;border-right:1px solid var(--line)}
+.nv{text-align:left;padding-left:var(--s4);border-radius:var(--r-m)}.nv[aria-current=page]{background:var(--surface-2)}
+.nv[aria-current=page]::before{top:10px;bottom:10px;left:0;right:auto;width:3px;height:auto;border-radius:0 3px 3px 0}
+.app{max-width:860px}.dock,.fb,#toast{--nav-h:0px}.fb,#toast{margin-left:auto}}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+.inner{transform:none!important}.back{transform:none}.back,.flipped .front{opacity:0;visibility:hidden}.flipped .back{opacity:1;visibility:visible}.emo,.fb img{display:none}}
+/* ===== v4: carpetas, práctica, fallos ===== */
+input[type=radio]{width:22px;height:22px;min-height:0;accent-color:var(--accent)}
+fieldset{border:0;padding:0;display:grid;gap:var(--s2)}legend{font:600 var(--t-s) var(--font-ui);margin-bottom:var(--s2)}
+.fld.chk input[type=number]{width:96px}dialog .fld.chk{grid-template-columns:auto 1fr auto;align-items:center}
+.chip[aria-current=page]{background:var(--text);color:var(--bg);border-color:var(--text)}
+.crumbs{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s2);margin-bottom:var(--s3)}
+.item.folder{grid-template-columns:auto 1fr auto;align-items:center}
+.fbtn{background:none;border:0;color:var(--text);font:inherit;text-align:left;min-height:var(--hit);cursor:pointer;padding:0}
+.md>:first-child{margin-top:0}.md p+p,.md p+ul,.md ul{margin-top:.4em}.md ul{padding-left:1.2em}
+.item .md{color:var(--muted);font-size:var(--t-s);overflow-wrap:anywhere}.item .qb p{color:var(--text);font-size:var(--t-m);font-weight:600}
+.pv{padding-left:var(--s5);font-size:var(--t-s)}dialog textarea{min-height:120px}
+</style></head><body>
+<a class="skip" href="#main">Saltar al contenido</a>
+<div class="app">
+<header class="top"><span class="brand">Fich<i>a</i></span><button class="ic" id="theme" type="button"></button></header>
+<div id="banner"></div>
+<main id="main" tabindex="-1">
+<section id="v-study" aria-label="Hoy"><div class="skel" aria-busy="true" aria-label="Cargando"></div></section>
+<section id="v-lib" aria-label="Mazos" hidden>
+ <div class="bar"><div><span class="eyebrow">Mazos</span><h1 id="libT"></h1></div><button class="btn pri" id="newCard" type="button">Nueva tarjeta</button></div>
+ <div id="libChips"></div>
+ <div class="tools"><input type="search" id="search" placeholder="Buscar en preguntas y respuestas…" aria-label="Buscar"><button class="chip" id="onlyV" type="button" aria-pressed="false">Solo por verificar</button></div>
+ <div class="row" id="deckTools" style="margin-bottom:12px"></div>
+ <div class="bulk" id="bulk" hidden><b><span id="selN">0</span> seleccionadas</b><button class="btn dng" id="delSel" type="button">Eliminar</button><button class="btn" id="moveSel" type="button">Mover a carpeta…</button><button class="btn" id="clrSel" type="button">Quitar selección</button></div>
+ <label class="row" style="align-items:center;gap:12px;min-height:44px"><input type="checkbox" id="selAll"> <span class="mut">Seleccionar todas las visibles</span></label>
+ <div id="rows"></div></section>
+<section id="v-add" class="add" aria-label="Agregar" hidden>
+ <div class="bar"><h1>Agregar con IA</h1></div>
+ <div class="panel"><details><summary style="min-height:44px;cursor:pointer;font-weight:600">Paso previo: prompt para NotebookLM</summary>
+  <label class="fld">¿Qué quieres practicar? (uno o varios cursos, separados por coma)<input id="nbIn" list="courseList" maxlength="300" placeholder="Ej.: Razonamiento Verbal, Lenguaje, Literatura"></label><datalist id="courseList"></datalist>
+  <div class="chips" id="nbChips" role="group" aria-label="Cursos sugeridos"></div>
+  <label class="fld">Cantidad de preguntas por tema<select id="nbQty"><option value="pocas">Pocas</option><option value="normal" selected>Normal</option><option value="extenso">Extenso</option></select></label>
+  <div class="prompt" id="nbPrompt"></div><button class="btn" id="copyNb" type="button">Copiar prompt</button></details></div>
+ <div class="panel"><h2>1. Carpeta de destino</h2><label class="fld"><span class="sr">Carpeta de destino</span><input id="dest" list="folderList" maxlength="160" placeholder="Sin carpeta (o escribe una nueva: Comunicación > Lenguaje)"></label></div>
+ <div class="panel"><details><summary style="min-height:44px;cursor:pointer;font-weight:600">2. Copia este prompt y pégalo en ChatGPT</summary><div class="prompt" id="prompt"></div><button class="btn" id="copyPrompt" type="button">Copiar prompt</button></details></div>
+ <div class="panel"><h2>3. Pega el resultado</h2><textarea id="input" aria-label="Tarjetas en formato BLOQUE, P y R" placeholder="BLOQUE: Comunicación > Razonamiento Verbal > Etimología&#10;P: Pregunta&#10;R: Respuesta"></textarea><div id="validation" aria-live="polite"></div><div class="row"><button class="btn pri" id="create" type="button" disabled>Ver vista previa</button><button class="btn" id="clear" type="button">Limpiar</button></div></div>
+ <div id="preview" aria-live="polite"></div></section>
+<section id="v-stats" aria-label="Progreso" hidden></section>
+<section id="v-sug" aria-label="Sugerencias" hidden></section>
+</main></div>
+<nav id="nav" aria-label="Principal"><button class="nv" data-v="study" type="button">Hoy</button><button class="nv" data-v="lib" type="button">Mazos</button><button class="nv" data-v="add" type="button">Agregar</button><button class="nv" data-v="stats" type="button">Progreso</button><button class="nv" data-v="sug" type="button">Sugerencias</button></nav>
+<div id="fb" class="fb" hidden aria-hidden="true"></div><div id="toast" role="status" hidden></div><div id="live" class="sr" aria-live="polite"></div>
+<input type="file" id="file" accept="application/json,.json" hidden>
 
-<head>
+<dialog id="dlg" aria-labelledby="dlgT"><form method="dialog"><h2 id="dlgT"></h2>
+ <label>Carpeta (usa " > " entre niveles)<input id="fDeck" list="deckList" maxlength="160"></label><datalist id="deckList"></datalist>
+ <label>Pregunta<textarea id="fQ" rows="3" maxlength="1000" required></textarea></label>
+ <label>Respuesta<textarea id="fA" rows="4" maxlength="3000" required></textarea></label>
+ <label>Nota propia (opcional, se ve al voltear)<textarea id="fN" rows="2" maxlength="1000"></textarea></label>
+ <label class="fld chk"><input type="checkbox" id="fV">Marcar «Verificar»</label>
+ <div class="row"><button class="btn" value="cancel" formnovalidate>Cancelar</button><button class="btn pri" value="ok">Guardar</button></div></form></dialog>
+<dialog id="nameDlg" aria-labelledby="nT"><form method="dialog"><h2 id="nT"></h2><label><span class="sr">Nombre del mazo</span><input id="nIn" maxlength="160" required></label>
+ <div class="row"><button class="btn" value="cancel" formnovalidate>Cancelar</button><button class="btn pri" value="ok">Aceptar</button></div></form></dialog>
+<dialog id="impDlg" aria-labelledby="iT"><form method="dialog"><h2 id="iT">Importar copia</h2><p class="mut" id="iInfo"></p>
+ <div class="row"><button class="btn" id="iCancel" value="cancel">Cancelar</button><button class="btn" id="iReplace" value="replace">Reemplazar todo</button><button class="btn pri" id="iMerge" value="merge">Combinar</button></div></form></dialog>
+<datalist id="folderList"></datalist>
+<dialog id="pracDlg" aria-labelledby="pT"><form method="dialog"><h2 id="pT"></h2>
+ <fieldset><legend>Tarjetas</legend>
+  <label class="fld chk"><input type="radio" name="pm" value="all" checked><span>Todas (<span id="pCa"></span>)</span></label>
+  <label class="fld chk"><input type="radio" name="pm" value="fail"><span>Solo las que fallé (<span id="pCf"></span>)</span></label>
+  <label class="fld chk"><input type="radio" name="pm" value="n"><span>Un número fijo</span><input type="number" id="pN" min="1" max="500" value="20" inputmode="numeric" aria-label="Cantidad de tarjetas"></label></fieldset>
+ <fieldset><legend>Orden</legend>
+  <label class="fld chk"><input type="radio" name="po" value="fix" checked><span>Fijo</span></label>
+  <label class="fld chk"><input type="radio" name="po" value="shuf"><span>Barajado</span></label></fieldset>
+ <div class="row"><button class="btn" value="cancel" formnovalidate>Cancelar</button><button class="btn pri" value="ok">Empezar</button></div></form></dialog>
+<dialog id="splitDlg" aria-labelledby="sT"><form method="dialog"><h2 id="sT">Dividir tarjeta</h2><p class="mut">Escribe 2 o más tarjetas más simples con P: y R:, con una línea vacía entre ellas. Irán a la misma carpeta y la original se reemplaza (podrás deshacer).</p>
+ <textarea id="sIn" rows="10" aria-label="Tarjetas nuevas"></textarea><div id="sErr" class="msg err" role="alert" hidden></div>
+ <div class="row"><button class="btn" value="cancel" formnovalidate>Cancelar</button><button class="btn pri" id="sOk" type="button">Reemplazar</button></div></form></dialog>
 
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+'use strict';
+/* ===== 1. Utilidades ===== */
+const KEY='flashcards_app_data',KEY_S='flashcards_app_settings',KEY_BAK='flashcards_app_data_backup_pre_v3',KEY_BAK4='flashcards_app_data_backup_pre_v4';
+const ROOT='Todas',FOLL='\u0001fallos',SEP=' > ',MAXD=4;
+const segs=cat=>{cat=String(cat||'').trim();if(!cat||cat==='Sin categoría')return['Sin carpeta'];const p=(cat.includes('>')?cat.split('>'):cat.split(/\s[—–]\s/)).map(s=>s.trim()).filter(Boolean);return p.length?p:['Sin carpeta']};
+const key=c=>segs(c.category).join(SEP),topOf=c=>segs(c.category)[0],catOf=k=>k==='Sin carpeta'?'Sin categoría':k;
+const normPath=s=>String(s||'').split('>').map(x=>x.trim()).filter(Boolean).join(SEP);
+const depthOk=k=>k.split(SEP).length<=MAXD,lastSeg=k=>k.split(SEP).pop(),parentOf=k=>k.split(SEP).slice(0,-1).join(SEP);
+const inF=(c,f)=>{const k=key(c);return k===f||k.startsWith(f+SEP)};
+/* Markdown seguro: solo **negrita**, *cursiva*, listas con * o -, saltos de línea. Todo se crea como nodos DOM; el HTML se muestra como texto. */
+function md(t){const out=[];let ul=null;
+ const inl=s=>{const k=[];s.split(/(\*\*[^*\n]+\*\*|\*[^*\s][^*\n]*\*)/).forEach(p=>{if(!p)return;
+  if(p.length>4&&p.startsWith('**')&&p.endsWith('**'))k.push(el('strong',{},p.slice(2,-2)));
+  else if(p.length>2&&p.startsWith('*')&&p.endsWith('*'))k.push(el('em',{},p.slice(1,-1)));else k.push(p)});return k};
+ String(t).split(/\r?\n/).forEach(l=>{if(!l.trim()){ul=null;return}const m=/^\s*[*-]\s+(.*)$/.exec(l);
+  if(m){if(!ul){ul=el('ul',{});out.push(ul)}ul.append(el('li',{},...inl(m[1])))}else{ul=null;out.push(el('p',{},...inl(l)))}});return out}
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const DAY=864e5,MOTION=matchMedia('(prefers-reduced-motion: reduce)'),wait=ms=>MOTION.matches?0:ms;
+const uid=()=>crypto.randomUUID?.()||'c_'+Date.now()+Math.random().toString(36).slice(2);
+const norm=s=>String(s||'').trim().toLowerCase().replace(/\s+/g,' ');
+const dayKey=d=>{d=new Date(d);return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
+const endOfToday=()=>{const d=new Date();d.setHours(23,59,59,999);return d};
+const fmtInt=d=>d<1?'10 min':d<7?`${d} d`:d<30?`${Math.round(d/7)} sem`:d<365?(n=>`${n} ${n===1?'mes':'meses'}`)(Math.max(1,Math.round(d/30))):`${(d/365).toFixed(1).replace('.',',')} a`;
+const deckColor=n=>{let h=0;for(const ch of n)h=(h*31+ch.charCodeAt(0))>>>0;return`var(--d${h%8})`};
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+function el(tag,p={},...kids){const n=document.createElement(tag);
+ for(const[k,v]of Object.entries(p)){if(v==null||v===false)continue;if(k==='class')n.className=v;else if(k.startsWith('on'))n[k]=v;else n.setAttribute(k,v===true?'':v)}
+ n.append(...kids.flat().filter(x=>x!=null&&x!==false));return n}
+const btn=(label,fn,cls='')=>el('button',{type:'button',class:'btn '+cls,onclick:fn},label);
+const announce=t=>{const l=$('#live');l.textContent='';setTimeout(()=>l.textContent=t,40)};
+let toastT;
+function toast(msg,act){const t=$('#toast');t.replaceChildren(el('span',{},msg));if(act)t.append(el('button',{type:'button',onclick:()=>{act.fn();t.hidden=true}},act.label));
+ t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,act?7000:2600)}
 
-    <title>FlashcardsPro</title>
+/* ===== 2. Datos, ajustes y migración ===== */
+const LEGACY={again:'hard',hard:'hard',good:'regular',easy:'easy'};
+const clampE=e=>Math.min(3,Math.max(1.3,e));
+function clean(c){
+ const st=['new','learning','mastered','review'].includes(c.status)?c.status:'new';
+ const out={...c,id:String(c.id||uid()),category:String(c.category||'').trim()||'Sin categoría',question:String(c.question||'').trim(),answer:String(c.answer||'').trim(),
+  status:st,lastRating:['hard','regular','easy'].includes(c.lastRating)?c.lastRating:null,ratingCount:+c.ratingCount||0,lastReviewedAt:c.lastReviewedAt||null,
+  reviewHistory:Array.isArray(c.reviewHistory)?c.reviewHistory.filter(x=>x&&x.reviewedAt):[]};
+ if(typeof c.interval==='number'){out.interval=Math.max(0,c.interval);out.ease=clampE(+c.ease||2.5);out.due=c.due||null}
+ else{const seen=out.ratingCount>0||st!=='new';out.interval=seen?{mastered:21,learning:3,review:1,new:1}[st]:0;out.ease=st==='review'?2.3:2.5;
+  out.due=seen?new Date(new Date(out.lastReviewedAt||Date.now()).getTime()+out.interval*DAY).toISOString():null}
+ if(c.failCount!=null){const n=Math.floor(+c.failCount);out.failCount=n>0?n:0}
+ if(typeof c.note==='string'&&c.note.trim())out.note=c.note.trim().slice(0,2000);else delete out.note;
+ if(c.verify===true)out.verify=true;else delete out.verify;
+ return out}
+const SUGCATS=['Diseño','Funciones','Otra'];
+function cleanSug(x){if(!x||typeof x!=='object')return null;const t=String(x.text||'').trim().slice(0,500);if(!t)return null;
+ return{id:String(x.id||uid()),text:t,cat:SUGCATS.includes(x.cat)?x.cat:'Otra',at:/^\d{4}-\d{2}-\d{2}T/.test(String(x.at))?String(x.at):new Date().toISOString()}}
+let S={theme:null,newPerDay:10,goal:20,typed:false,lastDeck:null,savedAt:0,folders:[],warm:false,lastExportAt:0,lastFileAt:0,v4At:0,suggs:[]};
+let fileH=null,fileState='none',wT,linkPendingH=null;
+try{Object.assign(S,JSON.parse(localStorage.getItem(KEY_S)||'{}'))}catch{}
+S.folders=(Array.isArray(S.folders)?S.folders:[]).filter(f=>typeof f==='string').map(normPath).filter(Boolean);S.v4At=S.v4At||Date.now();
+S.suggs=(Array.isArray(S.suggs)?S.suggs:[]).map(cleanSug).filter(Boolean);
+const saveS=()=>{try{localStorage.setItem(KEY_S,JSON.stringify(S))}catch{}};
+let cards=[],loadError=null;
+function save(){if(loadError)return;S.savedAt=Date.now();saveS();try{localStorage.setItem(KEY,JSON.stringify(cards))}catch{toast('No se pudo guardar: almacenamiento lleno o bloqueado')}if(fileH&&fileState==='ok')queueWrite()}
+(function load(){let raw;
+ try{raw=localStorage.getItem(KEY)}catch{loadError={raw:null,msg:'El navegador bloquea el almacenamiento local.'};return}
+ if(raw==null)return;
+ try{const x=JSON.parse(raw),a=Array.isArray(x)?x:x.cards;if(!Array.isArray(a))throw 0;
+  try{if(!localStorage.getItem(KEY_BAK4))localStorage.setItem(KEY_BAK4,raw)}catch{loadError={raw,msg:'No se pudo crear la copia de seguridad previa a la v4 (almacenamiento lleno o bloqueado).'};return}
+  cards=a.map(clean).filter(c=>c.question&&c.answer);if(!localStorage.getItem(KEY_BAK))localStorage.setItem(KEY_BAK,raw);save()}
+ catch{loadError={raw,msg:'Los datos guardados no tienen un formato legible.'};try{localStorage.setItem(KEY_BAK+'_corrupt',raw)}catch{}}})();
 
-    ./css/app.css
+/* ===== 2b. Archivo de datos en la laptop (Chrome/Edge) ===== */
+const JSON_TYPES=[{description:'Datos de Ficha',accept:{'application/json':['.json']}}];
+const idb=(mode,fn)=>new Promise((res,rej)=>{const r=indexedDB.open('flashcards_fs',1);r.onupgradeneeded=()=>r.result.createObjectStore('h');
+ r.onsuccess=()=>{const t=r.result.transaction('h',mode),o=fn(t.objectStore('h'));t.oncomplete=()=>res(o.result);t.onerror=()=>rej(t.error)};r.onerror=()=>rej(r.error)});
+const envelope=()=>({app:'Flashcards',version:4,savedAt:S.savedAt,cards,folders:S.folders,suggs:S.suggs||[]});
+function queueWrite(){clearTimeout(wT);wT=setTimeout(async()=>{try{const w=await fileH.createWritable();await w.write(JSON.stringify(envelope()));await w.close();S.lastFileAt=Date.now();saveS()}catch{fileState='ask';render()}},400)}
+async function syncFromFile(){const txt=await(await fileH.getFile()).text();let d=null;try{d=txt.trim()?JSON.parse(txt):null}catch{}
+ if(d&&!Array.isArray(d)&&Array.isArray(d.cards)&&(d.savedAt||0)>=(S.savedAt||0)){cards=d.cards.map(clean).filter(c=>c.question&&c.answer);if(Array.isArray(d.folders))S.folders=[...new Set([...S.folders,...d.folders.filter(f=>typeof f==='string').map(normPath).filter(Boolean)])];if(Array.isArray(d.suggs))S.suggs=d.suggs.map(cleanSug).filter(Boolean);loadError=null;S.savedAt=d.savedAt||0;saveS();try{localStorage.setItem(KEY,JSON.stringify(cards))}catch{}}
+ else queueWrite();
+ fileState='ok';render()}
+async function initFile(){if(!('showSaveFilePicker' in window))return;
+ try{fileH=await idb('readonly',st=>st.get('main'))||null}catch{fileH=null}
+ if(!fileH)return;
+ try{if(await fileH.queryPermission({mode:'readwrite'})==='granted')await syncFromFile();else{fileState='ask';render()}}catch{fileState='ask';render()}}
+const attachFile=h=>{fileH=h;fileState='ok';idb('readwrite',st=>st.put(h,'main')).catch(()=>{})};
+async function linkFile(existing){
+ try{const h=existing?(await showOpenFilePicker({types:JSON_TYPES}))[0]:await showSaveFilePicker({suggestedName:'flashcards_datos.json',types:JSON_TYPES});
+  if(await h.requestPermission({mode:'readwrite'})!=='granted')return;
+  const txt=existing?await(await h.getFile()).text():'';
+  if(existing&&txt.trim()){linkPendingH=h;openImport(txt);if(!pending)linkPendingH=null;return}
+  attachFile(h);queueWrite();render();toast('Archivo vinculado')}
+ catch(e){if(e.name!=='AbortError')toast('No se pudo vincular el archivo')}}
+async function reconnect(){try{if(await fileH.requestPermission({mode:'readwrite'})==='granted')await syncFromFile();else toast('Permiso no concedido')}catch{toast('No se pudo reconectar')}}
+function unlinkFile(){fileH=null;fileState='none';idb('readwrite',st=>st.delete('main')).catch(()=>{});render();toast('Archivo desvinculado')}
+function renderBanner(){const k=[],lk=fileH&&fileState==='ok';
+ if(fileState==='ask')k.push(el('div',{class:'panel',role:'alert'},el('p',{style:'margin-bottom:12px'},'Reconecta tu archivo de datos para seguir guardando en tu laptop.'),btn('Reconectar',reconnect,'pri')));
+ else if(cards.length&&!loadError&&Date.now()-((lk?S.lastFileAt:S.lastExportAt)||S.v4At)>7*DAY)k.push(el('div',{class:'msg',role:'status'},lk?'Hace más de 7 días que no se escribe tu archivo vinculado. Revisa que siga conectado. ':'Hace más de 7 días que no exportas una copia de seguridad. ',lk?null:btn('Exportar ahora',doExport)));
+ $('#banner').replaceChildren(...k)}
+function fileBlock(){
+ if(!('showSaveFilePicker' in window))return el('p',{class:'mut',style:'margin-bottom:12px'},'Para guardar en un archivo de tu laptop de forma automática, abre esta app en Chrome o Edge.');
+ if(fileH)return el('div',{style:'margin-bottom:16px'},el('p',{},`Guardado automático en: ${fileH.name}`),el('p',{class:'mut',style:'margin-bottom:12px'},fileState==='ok'?'Cada cambio se escribe en ese archivo.':'Pendiente de reconectar.'),btn('Desvincular archivo',unlinkFile));
+ return el('div',{style:'margin-bottom:16px'},el('p',{class:'mut',style:'margin-bottom:12px'},'Guarda tus datos en un archivo de tu laptop; se actualiza solo con cada cambio.'),el('div',{class:'row'},btn('Crear archivo de datos',()=>linkFile(false),'pri'),btn('Usar archivo existente',()=>linkFile(true))))}
 
-</head>
+/* ===== 3. Repetición espaciada (SM-2 simplificado) ===== */
+const RATES=[['again','Otra vez'],['hard','Difícil'],['good','Bien'],['easy','Fácil']];
+function schedule(c,r){const i=c.interval,e=c.ease,good=i<1?2:i<2?3:Math.round(i*e);
+ if(r==='again')return{interval:0,ease:clampE(e-.2)};
+ if(r==='hard')return{interval:Math.min(good-1||1,Math.max(1,Math.round(Math.max(i,1)*1.2))),ease:clampE(e-.15)};
+ if(r==='good')return{interval:good,ease:e};
+ return{interval:Math.max(i<1?4:Math.round(i*e*1.3),good+1),ease:clampE(e+.15)}}
+function applyRating(c,r){const s=schedule(c,r),now=new Date();
+ Object.assign(c,{interval:s.interval,ease:s.ease,due:new Date(now.getTime()+(s.interval?s.interval*DAY:10*60e3)).toISOString(),
+  status:r==='again'||r==='hard'?'review':s.interval>=21?'mastered':'learning',lastRating:LEGACY[r],lastReviewedAt:now.toISOString()});
+ c.ratingCount++;c.reviewHistory.push({rating:r,reviewedAt:c.lastReviewedAt,interval:s.interval})}
+const isNew=c=>!c.due,isDue=c=>!!c.due&&new Date(c.due)<=endOfToday(),isMastered=c=>!!c.due&&c.interval>=21;
+const reviewsOn=k=>cards.reduce((n,c)=>n+c.reviewHistory.filter(h=>dayKey(h.reviewedAt)===k).length,0);
+const introducedToday=()=>{const k=dayKey(new Date());return cards.filter(c=>c.reviewHistory[0]&&dayKey(c.reviewHistory[0].reviewedAt)===k).length};
+function dayCounts(){const m=new Map();cards.forEach(c=>c.reviewHistory.forEach(h=>{const k=dayKey(h.reviewedAt);m.set(k,(m.get(k)||0)+1)}));return m}
+function streakOf(m){const d=new Date();if(!m.has(dayKey(d)))d.setDate(d.getDate()-1);let n=0;while(m.has(dayKey(d))){n++;d.setDate(d.getDate()-1)}return n}
+function nextDueText(list){const eod=endOfToday(),f=list.filter(c=>c.due&&new Date(c.due)>eod).sort((a,b)=>new Date(a.due)-new Date(b.due));if(!f.length)return'';
+ const k=dayKey(f[0].due),n=f.filter(c=>dayKey(c.due)===k).length;
+ return`Lo próximo vence el ${new Date(f[0].due).toLocaleDateString('es',{weekday:'long',day:'numeric',month:'long'})} (${n} ${n===1?'tarjeta':'tarjetas'}).`}
 
-<body>
+/* ===== 4. Estado y colas ===== */
+let view='study',deck=segs(S.lastDeck||ROOT).join(SEP),session=null,flipped=false,typed='',q='',sel=new Set(),editId=null,pending=null,parsed=[],busy=false,enter=false,prevPct=0,fbT;
+const pool=()=>deck===ROOT?cards:deck===FOLL?failedToday():cards.filter(c=>inF(c,deck));
+const FOLLN='Fallos de hoy',isFail=r=>r==='again'||r==='hard';
+let pracScope=[],pv=null,pendF=[],pendSug=[],splitId=null,onlyV=false;
+function allFolders(){const s=new Set(),add=k=>{const p=k.split(SEP);for(let i=1;i<=p.length;i++)s.add(p.slice(0,i).join(SEP))};cards.forEach(c=>add(key(c)));S.folders.forEach(add);return[...s].sort((a,b)=>a.localeCompare(b,'es'))}
+const cnt=f=>cards.reduce((n,c)=>n+(inF(c,f)?1:0),0);
+/* Fallos: dura un día; sale cuando, tras el último fallo, hay 2 aciertos. all=true: cualquier fallo del día (calentamiento). */
+function failedOn(day,all){return cards.filter(c=>{const h=c.reviewHistory.filter(x=>dayKey(x.reviewedAt)===day);let i=-1;h.forEach((x,j)=>{if(isFail(x.rating))i=j});return i>=0&&(all||h.slice(i+1).filter(x=>!isFail(x.rating)).length<2)})}
+const failedToday=()=>failedOn(dayKey(new Date()));
+const copyText=t=>navigator.clipboard.writeText(t).then(()=>toast('Prompt copiado')).catch(()=>toast('No se pudo copiar'));
+function copyHelp(list){if(!list.length)return toast('No hay fallos para ayudar');
+ copyText(`Eres un tutor para un examen de admisión. Estas flashcards me cuestan trabajo. Para CADA una:
+1) Explícala de otra forma, con palabras simples.
+2) Dame un ejemplo concreto.
+3) Crea 2 o 3 tarjetas más simples (una sola idea cada una), sin inventar datos.
+Devuelve las tarjetas nuevas SOLO en este formato, con una línea vacía entre tarjetas, usando como BLOQUE exactamente la carpeta indicada de cada tarjeta:
+BLOQUE: ruta > de > carpeta
+P: pregunta
+R: respuesta
 
-    <header class="header">
+TARJETAS QUE ME CUESTAN:
+`+list.map((c,i)=>`${i+1}. Carpeta: ${key(c)}\nP: ${c.question}\nR: ${c.answer}`+(c.note?`\nMi nota: ${c.note}`:'')).join('\n\n'))}
+function start(ids,o={}){ids=[...new Set(ids)];if(!ids.length)return toast('No hay tarjetas para practicar');
+ session={ids,total:ids.length,done:0,r:{again:0,hard:0,good:0,easy:0},st:{},failed:new Set(),sid:uid(),until:o.min?Date.now()+o.min*6e4:0,title:o.title||''};
+ flipped=false;typed='';prevPct=0;enter=true;view='study';render();$('#main').focus({preventScroll:true})}
+function openPractice(f){const l=f===ROOT?cards:f===FOLL?failedToday():cards.filter(c=>inF(c,f));if(!l.length)return toast('Esta carpeta no tiene tarjetas');
+ pracScope=l;$('#pT').textContent='Practicar: '+(f===ROOT?'Todas':f===FOLL?FOLLN:f);$('#pCa').textContent=l.length;$('#pCf').textContent=l.filter(c=>c.lastRating==='hard').length;
+ $('#pracDlg').returnValue='';$('#pracDlg').showModal()}
+$('#pracDlg').addEventListener('close',()=>{if($('#pracDlg').returnValue!=='ok')return;const m=$('input[name=pm]:checked').value;let l=[...pracScope];
+ if(m==='fail')l=l.filter(c=>c.lastRating==='hard');if($('input[name=po]:checked').value==='shuf')shuffle(l);
+ if(m==='n')l=l.slice(0,Math.max(1,Math.min(500,+$('#pN').value||20)));
+ if(!l.length)return toast('No hay tarjetas que cumplan esa opción');start(l.map(c=>c.id),{title:$('#pT').textContent.replace('Practicar: ','')})});
+function openSplit(id){const c=cards.find(x=>x.id===id);if(!c)return;splitId=id;$('#sIn').value=`P: ${c.question}\nR: ${c.answer}\n\nP: \nR: `;$('#sErr').hidden=true;$('#splitDlg').showModal()}
+$('#sOk').onclick=()=>{const c=cards.find(x=>x.id===splitId);if(!c)return;const r=parse($('#sIn').value,'x'),e=$('#sErr');
+ if(r.err.length||r.out.length<2){e.textContent=r.err.length?r.err.slice(0,3).join(' '):'Escribe al menos 2 tarjetas.';e.hidden=false;return}
+ $('#splitDlg').close();const n=r.out.map(x=>clean({category:c.category,question:x.question,answer:x.answer}));
+ cards=cards.filter(x=>x.id!==c.id);cards.push(...n);
+ if(session){session.ids=session.ids.filter(i=>i!==c.id);session.total=Math.max(session.done,session.total-1);flipped=false}
+ save();render();toast(`Tarjeta dividida en ${n.length}`,{label:'Deshacer',fn:()=>{const s=new Set(n.map(x=>x.id));cards=cards.filter(x=>!s.has(x.id));cards.push(c);save();render()}})};
+function doExport(){download(JSON.stringify({app:'Flashcards',version:4,exportedAt:new Date().toISOString(),cards,folders:S.folders,suggs:S.suggs||[]},null,2),`flashcards_${dayKey(new Date())}.json`);S.lastExportAt=Date.now();saveS();render();toast('Copia exportada')}
+const current=()=>session&&cards.find(c=>c.id===session.ids[0]);
+function plan(){const list=pool(),left=Math.max(0,S.newPerDay-introducedToday());
+ return{due:list.filter(isDue).sort((a,b)=>new Date(a.due)-new Date(b.due)),fresh:list.filter(isNew).slice(0,left)}}
+function startToday(){const p=plan();start([...p.due,...p.fresh].map(c=>c.id),{title:deck===ROOT?'Hoy':deck===FOLL?FOLLN:lastSeg(deck)})}
+function removeCards(ids,msg,extra){const set=new Set(ids),gone=cards.filter(c=>set.has(c.id));if(!gone.length)return;
+ cards=cards.filter(c=>!set.has(c.id));sel=new Set([...sel].filter(i=>!set.has(i)));
+ if(session){const n=session.ids.length;session.ids=session.ids.filter(i=>!set.has(i));session.total-=n-session.ids.length;flipped=false}
+ save();render();toast(msg||`${gone.length} tarjeta(s) eliminada(s)`,{label:'Deshacer',fn:()=>{cards.push(...gone);extra&&extra();save();render()}})}
 
-        <h1>FlashcardsPro</h1>
+/* ===== 5. Componentes compartidos ===== */
+function chips(){const m=new Map();cards.forEach(c=>{const t=topOf(c),d=m.get(t)||{due:0};if(isDue(c))d.due++;m.set(t,d)});const ft=failedToday().length;
+ const mk=(name,d,label)=>el('button',{class:'chip',type:'button','aria-pressed':String(deck===name),style:name===ROOT?null:`--deck:${deckColor(name)}`,
+  onclick:()=>{deck=name;sel.clear();session=null;flipped=false;render()}},name===ROOT?null:el('i',{class:'dot'}),label||name,
+  d.due?el('b',{class:'bdg','aria-label':`${d.due} vencen hoy`},d.due):null);
+ return el('div',{class:'chips',role:'group','aria-label':'Carpetas'},mk(ROOT,{due:cards.filter(isDue).length}),ft?mk(FOLL,{due:ft},FOLLN):null,...[...m].sort((a,b)=>a[0].localeCompare(b[0],'es')).map(([k,v])=>mk(k,v)))}
+const empty=(h,p,...acts)=>el('div',{class:'empty'},el('h2',{},h),el('p',{class:'mut'},p),el('div',{class:'row'},...acts));
+const goalBar=done=>el('div',{class:'goal panel'},el('div',{class:'row sp'},el('span',{},'Meta de hoy'),el('b',{},`${done} / ${S.goal}`)),
+ el('div',{class:'track',role:'progressbar','aria-label':'Meta diaria','aria-valuemin':'0','aria-valuemax':String(S.goal),'aria-valuenow':String(Math.min(done,S.goal))},el('i',{style:`width:${Math.min(100,done/S.goal*100)}%`})));
+function askName(title,val,list){return new Promise(res=>{const d=$('#nameDlg'),i=$('#nIn');$('#nT').textContent=title;i.value=val||'';list?i.setAttribute('list','folderList'):i.removeAttribute('list');d.returnValue='';
+ d.onclose=()=>res(d.returnValue==='ok'&&i.value.trim()?i.value.trim():null);d.showModal();i.select()})}
+function openEdit(id){editId=id;const c=cards.find(x=>x.id===id),d=$('#dlg');$('#dlgT').textContent=c?'Editar tarjeta':'Nueva tarjeta';
+ $('#fDeck').value=c?(key(c)==='Sin carpeta'?'':key(c)):(deck===ROOT||deck===FOLL?'':deck);$('#fQ').value=c?c.question:'';$('#fA').value=c?c.answer:'';$('#fN').value=c?.note||'';$('#fV').checked=!!c?.verify;
+ $('#deckList').replaceChildren(...allFolders().map(v=>el('option',{value:v})));d.returnValue='';d.showModal()}
+$('#dlg').addEventListener('close',()=>{if($('#dlg').returnValue!=='ok')return;
+ const p=normPath($('#fDeck').value),qq=$('#fQ').value.trim(),a=$('#fA').value.trim(),nt=$('#fN').value.trim(),v=$('#fV').checked,c=cards.find(x=>x.id===editId);
+ if(p&&!depthOk(p))return toast(`Máximo ${MAXD} niveles de carpetas`);
+ if(c){const same=p===(key(c)==='Sin carpeta'?'':key(c));Object.assign(c,{question:qq,answer:a});if(!same)c.category=p?catOf(p):'Sin categoría';nt?c.note=nt:delete c.note;v?c.verify=true:delete c.verify}
+ else cards.push(clean({category:p?catOf(p):'Sin categoría',question:qq,answer:a,note:nt,verify:v}));save();render();toast('Guardada')});
+function applyTheme(){const t=S.theme||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.dataset.theme=t;
+ const b=$('#theme');b.textContent=t==='dark'?'☀':'☾';b.setAttribute('aria-label',t==='dark'?'Cambiar a modo claro':'Cambiar a modo oscuro');
+ $('meta[name=theme-color]').content=getComputedStyle(document.body).backgroundColor}
+$('#theme').onclick=()=>{S.theme=document.documentElement.dataset.theme==='dark'?'light':'dark';saveS();applyTheme()};
 
-        <nav>
+/* ===== 6. Hoy / Estudio ===== */
+function renderStudy(){const root=$('#v-study');
+ if(loadError)return viewError(root);
+ if(!cards.length)return root.replaceChildren(empty('Aún no tienes tarjetas','Pega apuntes con ayuda de una IA o crea la primera a mano.',btn('Agregar con IA',()=>go('add'),'pri'),btn('Crear una tarjeta',()=>openEdit(null))));
+ if(session)return current()?viewSession(root):viewDone(root);
+ viewToday(root)}
+function viewError(root){root.replaceChildren(empty('No pude leer tus datos',loadError.msg+' No se ha borrado nada: se conserva una copia en este navegador.',
+ ...(loadError.raw?[btn('Descargar datos originales',()=>download(loadError.raw,'flashcards_originales.json'))]:[]),btn('Importar copia JSON',()=>$('#file').click(),'pri'),
+ btn('Empezar de cero',()=>{loadError=null;cards=[];save();render()},'dng')))}
+function viewToday(root){const p=plan(),n=p.due.length+p.fresh.length,dv=deck===ROOT||deck===FOLL?null:`--deck:${deckColor(deck)}`,next=nextDueText(pool()),ft=failedToday(),y=S.warm?failedOn(dayKey(Date.now()-DAY),true):[],pl=deck===ROOT?'Practicar todo':'Practicar esta carpeta';
+ root.replaceChildren(
+  el('div',{class:'bar'},el('div',{},el('span',{class:'eyebrow'},new Date().toLocaleDateString('es',{weekday:'long',day:'numeric',month:'long'})),el('h1',{},deck===ROOT?'Hoy':deck===FOLL?FOLLN:lastSeg(deck)))),chips(),
+  n?el('div',{class:'today panel',style:dv},el('div',{class:'big'},n),el('p',{},n===1?'tarjeta para hoy':'tarjetas para hoy'),
+    el('p',{class:'mut'},`${p.due.length} por repasar · ${p.fresh.length} nuevas (límite diario: ${S.newPerDay})`),btn('Empezar',startToday,'pri big'))
+   :empty('Todo al día','No quedan repasos para hoy. '+next,btn(pl,()=>openPractice(deck),'pri'),btn('Agregar tarjetas',()=>go('add'))),
+  n?btn(pl,()=>openPractice(deck),'big'):null,
+  ft.length&&deck!==FOLL?el('div',{class:'panel'},el('h2',{},FOLLN),el('p',{class:'mut',style:'margin-bottom:12px'},`${ft.length} ${ft.length===1?'tarjeta':'tarjetas'} con calificación difícil hoy.`),el('div',{class:'row'},btn('Practicar fallos',()=>openPractice(FOLL),'pri'),btn('Ayuda con mis fallos',()=>copyHelp(ft)))):null,
+  y.length?el('div',{class:'panel'},el('h2',{},'Calentamiento de 5 minutos'),el('p',{class:'mut',style:'margin-bottom:12px'},`${y.length} ${y.length===1?'fallo':'fallos'} de ayer.`),btn('Empezar calentamiento',()=>start(shuffle(y.map(c=>c.id)),{min:5,title:'Calentamiento'}),'pri')):null,
+  el('div',{style:'height:16px'}),goalBar(reviewsOn(dayKey(new Date()))))}
+const FB={again:['dificil','Otra vez'],hard:['regular','Difícil'],good:['facil','Bien'],easy:['facil','Fácil']};
+function viewSession(root){const c=current(),pct=session.done/session.total*100,fill=el('i',{style:`width:${prevPct}%`}),rep=!!(session.st[c.id]&&session.st[c.id].n);
+ const face=(cls,gif,...kids)=>el('article',{class:'face '+cls,...(cls==='back'&&!flipped?{'aria-hidden':'true'}:{}),...(cls==='front'&&flipped?{'aria-hidden':'true'}:{})},
+  el('div',{class:'head'},el('span',{},el('i',{class:'dot'}),key(c),c.failCount>=3?el('b',{class:'bdg'},'terca'):null,c.verify?el('b',{class:'bdg'},'verificar'):null),el('img',{class:'emo',src:`./assets/emojis/${gif}.gif`,alt:'',onerror:e=>e.target.remove()})),...kids);
+ const txt=(cls,t)=>el('div',{class:cls+(t.length>160?' long':'')+' md'},...md(t));
+ const front=face('front','pregunta',txt('q',c.question),el('p',{class:'hint'},'Toca la tarjeta o pulsa Espacio para ver la respuesta'));
+ const back=face('back','respuesta',el('div',{class:'mine',id:'mine',hidden:true},el('small',{},'Tu respuesta'),el('p',{id:'mineT'})),txt('a',c.answer),c.note?el('div',{class:'mine'},el('small',{},'Mi nota'),el('div',{class:'md'},...md(c.note))):null);
+ const card=el('div',{class:'card'+(flipped?' flipped':'')+(enter?' enter':''),id:'card',role:'button',tabindex:'0','aria-label':'Tarjeta. Pulsa para voltearla',onclick:flip,
+  onkeydown:e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();flip()}}},el('div',{class:'inner'},front,back));enter=false;
+ const box=S.typed?el('textarea',{id:'typed',rows:'2',maxlength:'500',placeholder:'Escribe lo que recuerdas (opcional)…','aria-label':'Tu respuesta antes de voltear',
+  oninput:e=>typed=e.target.value,onkeydown:e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();flip()}}}):null;if(box)box.value=typed;
+ const dock=el('div',{class:'dock'},
+  el('div',{id:'reveal',class:'stack',hidden:flipped},box,el('button',{class:'btn pri big',type:'button',onclick:flip},'Mostrar respuesta',el('kbd',{},'Espacio'))),
+  el('div',{id:'rates',class:'rates',role:'group','aria-label':'¿Qué tan bien la recordaste?',hidden:!flipped},
+   ...RATES.map(([r,l],i)=>{const t=rep?'refuerzo':fmtInt(schedule(c,r).interval);return el('button',{class:'rate',type:'button','data-r':r,'aria-label':`${l}, ${rep?'refuerzo en esta sesión':'vuelve en '+t}`,onclick:()=>rate(r)},el('span',{},l,el('kbd',{},i+1)),el('small',{},t))})));
+ root.replaceChildren(
+  el('div',{class:'bar'},el('div',{},el('span',{class:'eyebrow'},'Sesión'),el('h1',{style:'font-size:var(--t-xl)'},session.title||'Sesión')),
+   el('div',{class:'row',style:'align-items:center'},el('span',{class:'mut',role:'status'},`${session.done+1} / ${session.total}`),btn('Salir',()=>{session=null;flipped=false;render()}))),
+  el('div',{class:'track',role:'progressbar','aria-label':'Progreso de la sesión','aria-valuemin':'0','aria-valuemax':String(session.total),'aria-valuenow':String(session.done)},fill),
+  el('div',{class:'stage',style:`--deck:${deckColor(topOf(c))}`},card),dock,
+  el('div',{class:'quiet'},btn('Editar',()=>openEdit(c.id)),btn('Eliminar',()=>removeCards([c.id],'Tarjeta eliminada'))),
+  c.failCount>=3?el('div',{class:'panel',role:'group','aria-label':'Tarjeta terca'},el('p',{style:'margin-bottom:12px'},`Esta tarjeta se ha calificado difícil ${c.failCount} veces. Prueba otra vía:`),
+   el('div',{class:'row'},btn('Escribir una nota',()=>{openEdit(c.id);$('#fN').focus()}),btn('Dividirla',()=>openSplit(c.id)),btn('Copiar ayuda para ChatGPT',()=>copyHelp([c])))):null);
+ requestAnimationFrame(()=>{fill.style.width=pct+'%';prevPct=pct});
+ if(flipped){$('#mine').hidden=!typed.trim();$('#mineT').textContent=typed}}
+function flip(){const c=current();if(!c||busy)return;flipped=!flipped;
+ $('#card').classList.toggle('flipped',flipped);$('#reveal').hidden=flipped;$('#rates').hidden=!flipped;
+ $('.front').setAttribute('aria-hidden',String(flipped));$('.back').setAttribute('aria-hidden',String(!flipped));
+ $('#mine').hidden=!flipped||!typed.trim();$('#mineT').textContent=typed;$('#card').focus({preventScroll:true});
+ if(flipped)announce('Respuesta: '+c.answer)}
+function rate(r){const c=current();if(!c||!flipped||busy)return;busy=true;
+ const s=session,st=s.st[c.id]||(s.st[c.id]={n:0,ok:0,bad:false}),first=!st.n,fail=isFail(r),days=schedule(c,r).interval;
+ if(first){applyRating(c,r);if(fail)c.due=new Date().toISOString()}
+ else{const now=new Date().toISOString();Object.assign(c,{lastRating:LEGACY[r],lastReviewedAt:now});c.ratingCount++;c.reviewHistory.push({rating:r,reviewedAt:now,interval:c.interval,reinforce:true})}
+ st.n++;
+ if(fail){st.ok=0;st.bad=true;c.failCount=(c.failCount||0)+1;c.okRun=0;s.failed.add(c.id)}
+ else{st.ok++;if(c.okSid!==s.sid){c.okSid=s.sid;c.okRun=(c.okRun||0)+1;if(c.okRun>=2)c.failCount=0}}
+ save();s.r[r]++;s.ids.shift();
+ if(fail||(st.bad&&st.ok<2))s.ids.splice(Math.min(s.ids.length,4+(Math.random()<.5?1:0)),0,c.id);else s.done++;
+ if(s.until&&Date.now()>s.until)s.ids=[];
+ const f=$('#fb'),lbl=fail?'vuelve hoy':first?`vuelve en ${fmtInt(days)}`:'refuerzo';f.replaceChildren(el('img',{src:`./assets/emojis/${FB[r][0]}.gif`,alt:'',onerror:e=>e.target.remove()}),el('span',{},`${FB[r][1]} · ${lbl}`));
+ f.hidden=false;f.classList.remove('show');void f.offsetWidth;f.classList.add('show');clearTimeout(fbT);fbT=setTimeout(()=>f.hidden=true,1100);announce(`${FB[r][1]}. ${fail?'Reaparece en esta sesión':first?'Vuelve en '+fmtInt(days):'Bien, refuerzo registrado'}`);
+ $('#card').classList.add('out');
+ setTimeout(()=>{flipped=false;typed='';busy=false;enter=true;render()},wait(200))}
+function viewDone(root){const r=session.r,n=r.again+r.hard+r.good+r.easy,rec=n?Math.round((n-r.again-r.hard)/n*100):0,f=[...session.failed].filter(i=>cards.some(c=>c.id===i));
+ root.replaceChildren(el('div',{class:'empty'},el('h2',{},'Sesión completada'),
+  el('p',{role:'status'},f.length?`Fallaste ${f.length} de ${session.total} tarjetas.`:`Sin fallos en ${session.total} tarjetas.`),
+  el('div',{class:'stat3 panel',style:'width:100%'},el('div',{},el('b',{},n),el('span',{class:'mut'},'repasos')),el('div',{},el('b',{},rec+'%'),el('span',{class:'mut'},'bien')),el('div',{},el('b',{},streakOf(dayCounts())),el('span',{class:'mut'},'días de racha'))),
+  el('p',{class:'mut'},nextDueText(pool())||'Buen trabajo.'),
+  el('div',{class:'row'},f.length?btn('Ronda extra con las falladas',()=>{const ids=shuffle([...f]);if(ids.join()===f.join())ids.reverse();start(ids,{title:'Ronda extra'})},'pri'):null,
+   f.length?btn('Ayuda con mis fallos',()=>copyHelp(cards.filter(c=>f.includes(c.id)))):null,btn('Volver a Hoy',()=>{session=null;render()},f.length?'':'pri'))))}
+document.addEventListener('keydown',e=>{if(view!=='study'||!session||!current()||$('dialog[open]')||e.ctrlKey||e.metaKey||e.altKey)return;
+ const a=document.activeElement,tag=a.tagName;if(tag==='TEXTAREA'||tag==='INPUT')return;
+ if(e.code==='Space'||e.key==='Enter'){if(tag==='BUTTON'||a.id==='card')return;e.preventDefault();flip()}
+ else if('1234'.includes(e.key)&&e.key.length===1&&flipped)rate(RATES[+e.key-1][0])});
 
-            <button id="studyBtn">
-                Estudiar
-            </button>
+/* ===== 7. Mazos (biblioteca) ===== */
+const dueLabel=c=>isNew(c)?'Nueva':isDue(c)?'Vence hoy':'En '+fmtInt(Math.ceil((new Date(c.due)-Date.now())/DAY));
+const cd=k=>{deck=k;sel.clear();q='';$('#search').value='';render()};
+const visible=()=>{const t=norm(q),base=(t||onlyV||deck===FOLL)?pool():cards.filter(c=>key(c)===deck);
+ return base.filter(c=>(!t||norm(c.question+' '+c.answer+' '+c.category).includes(t))&&(!onlyV||c.verify))};
+function relocate(src,dst,msg){if(dst===src||src==='Sin carpeta')return;if(dst.startsWith(src+SEP))return toast('No puedes mover una carpeta dentro de sí misma');
+ const inS=f=>f===src||f.startsWith(src+SEP),sub=cards.filter(c=>inF(c,src)),pf=[...S.folders],
+  deep=Math.max(src.split(SEP).length,...sub.map(c=>segs(c.category).length),...pf.filter(inS).map(f=>f.split(SEP).length))-src.split(SEP).length+dst.split(SEP).length;
+ if(deep>MAXD)return toast(`Máximo ${MAXD} niveles de carpetas`);
+ const prevs=sub.map(c=>[c,c.category]),pd=deck;
+ sub.forEach(c=>c.category=catOf(dst+key(c).slice(src.length)));S.folders=[...new Set(pf.map(f=>inS(f)?dst+f.slice(src.length):f))];
+ if(inS(deck))deck=dst+deck.slice(src.length);
+ save();render();toast(msg,{label:'Deshacer',fn:()=>{prevs.forEach(([c,o])=>c.category=o);S.folders=pf;deck=pd;save();render()}})}
+async function newFolder(){const n=await askName(deck===ROOT?'Nombre de la carpeta nueva':`Nueva subcarpeta en «${deck}»`);if(!n)return;
+ const k=normPath((deck===ROOT?'':deck+SEP)+n.replace(/>/g,'-'));if(!depthOk(k))return toast(`Máximo ${MAXD} niveles de carpetas`);
+ S.folders=[...new Set([...S.folders,k])];save();render();toast('Carpeta creada')}
+async function renFolder(){const n=await askName('Nuevo nombre de la carpeta',lastSeg(deck));if(!n)return;const p=parentOf(deck);relocate(deck,(p?p+SEP:'')+n.replace(/>/g,'-').trim(),'Carpeta renombrada')}
+async function movFolder(){const n=await askName(`Mover «${lastSeg(deck)}» a… (ruta destino; «Todas» = raíz)`,'',true);if(!n)return;let p=normPath(n);if(p===ROOT)p='';relocate(deck,(p?p+SEP:'')+lastSeg(deck),'Carpeta movida')}
+function delFolder(f){const ids=cards.filter(c=>inF(c,f)).map(c=>c.id),pf=[...S.folders];
+ if(!confirm(`¿Eliminar la carpeta «${f}» y sus ${ids.length} tarjetas? Podrás deshacerlo unos segundos.`))return;
+ S.folders=pf.filter(x=>x!==f&&!x.startsWith(f+SEP));deck=parentOf(f)||ROOT;
+ if(ids.length)removeCards(ids,`Carpeta «${lastSeg(f)}» eliminada`,()=>{S.folders=pf;saveS()});
+ else{save();render();toast('Carpeta eliminada',{label:'Deshacer',fn:()=>{S.folders=pf;save();render()}})}}
+function folderTools(){const f=deck,root=f===ROOT,fl=f===FOLL,t=[];
+ if(!fl)t.push(btn(root?'Nueva carpeta':'Nueva subcarpeta',newFolder));if(!root)t.push(btn('Practicar',()=>openPractice(f),'pri'));
+ if(fl)t.push(btn('Ayuda con mis fallos',()=>copyHelp(failedToday())));
+ if(!root&&!fl&&f!=='Sin carpeta')t.push(btn('Renombrar',renFolder),btn('Mover',movFolder));if(!root&&!fl)t.push(btn('Eliminar',()=>delFolder(f),'dng'));return t}
+function renderLib(){const root=deck===ROOT,fl=deck===FOLL,a=visible(),parts=root||fl?[]:deck.split(SEP),searching=!!norm(q)||onlyV;
+ $('#libT').textContent=root?'Todas las carpetas':fl?FOLLN:parts[parts.length-1];
+ $('#libChips').replaceChildren(el('nav',{class:'crumbs','aria-label':'Ruta de carpetas'},
+  el('button',{class:'chip',type:'button','aria-current':root?'page':null,onclick:()=>cd(ROOT)},'Todas'),
+  ...(fl?[el('span',{'aria-hidden':'true'},'›'),el('button',{class:'chip',type:'button','aria-current':'page'},FOLLN)]:[]),
+  ...parts.flatMap((s,i)=>[el('span',{'aria-hidden':'true'},'›'),el('button',{class:'chip',type:'button','aria-current':i===parts.length-1?'page':null,onclick:()=>cd(parts.slice(0,i+1).join(SEP))},s)])));
+ $('#deckTools').replaceChildren(...folderTools());$('#onlyV').setAttribute('aria-pressed',String(onlyV));
+ $('#bulk').hidden=!sel.size;$('#selN').textContent=sel.size;$('#selAll').checked=a.length>0&&a.every(c=>sel.has(c.id));
+ const subs=fl||searching?[]:allFolders().filter(f=>root?!f.includes(SEP):parentOf(f)===deck),ft=failedToday().length;
+ const fr=(f,name,n,virt)=>el('div',{class:'item folder',style:`--deck:${deckColor(virt?'fallos':f)}`},el('i',{class:'dot'}),
+  el('button',{class:'fbtn',type:'button',onclick:()=>cd(f)},el('b',{},name),el('span',{class:'mut'},` · ${n} ${n===1?'tarjeta':'tarjetas'}`)),n?btn('Practicar',()=>openPractice(f)):el('span'));
+ const rows=[...(root&&!searching&&ft?[fr(FOLL,FOLLN,ft,1)]:[]),...subs.map(f=>fr(f,lastSeg(f),cnt(f))),
+  ...a.map(c=>el('div',{class:'item'},
+   el('label',{},el('input',{type:'checkbox','aria-label':'Seleccionar tarjeta',checked:sel.has(c.id),onchange:e=>{e.target.checked?sel.add(c.id):sel.delete(c.id);renderLib()}})),
+   el('div',{},el('div',{class:'qb md'},...md(c.question)),el('div',{class:'md'},...md(c.answer)),el('div',{},searching||fl?el('span',{class:'tag'},key(c)):null,el('span',{class:'tag'},dueLabel(c)),c.failCount>=3?el('span',{class:'tag'},`Terca · ${c.failCount}`):null,c.verify?el('span',{class:'tag'},'Verificar'):null)),
+   el('div',{class:'row',style:'flex-wrap:nowrap;gap:0'},el('button',{class:'ic',type:'button','aria-label':c.verify?'Quitar marca Verificar':'Marcar para verificar','aria-pressed':String(!!c.verify),onclick:()=>{c.verify?delete c.verify:c.verify=true;save();renderLib()}},'⚑'),
+    el('button',{class:'ic',type:'button','aria-label':'Editar tarjeta',onclick:()=>openEdit(c.id)},'✎'),el('button',{class:'ic',type:'button','aria-label':'Eliminar tarjeta',onclick:()=>removeCards([c.id],'Tarjeta eliminada')},'✕'))))];
+ $('#rows').replaceChildren(...(rows.length?rows:[cards.length||S.folders.length?el('p',{class:'mut',style:'padding:16px 0'},searching?'Nada coincide con tu búsqueda o filtro.':'Esta carpeta está vacía.'):empty('Aún no tienes tarjetas','Crea la primera o impórtala con IA.',btn('Nueva tarjeta',()=>openEdit(null),'pri'),btn('Agregar con IA',()=>go('add')))]))}
+$('#newCard').onclick=()=>openEdit(null);
+$('#search').oninput=e=>{q=e.target.value;renderLib()};
+$('#onlyV').onclick=()=>{onlyV=!onlyV;renderLib()};
+$('#selAll').onchange=e=>{visible().forEach(c=>e.target.checked?sel.add(c.id):sel.delete(c.id));renderLib()};
+$('#clrSel').onclick=()=>{sel.clear();renderLib()};$('#delSel').onclick=()=>removeCards([...sel]);
+$('#moveSel').onclick=async()=>{const n=await askName('Mover a qué carpeta (nueva o existente; niveles separados por " > ")','',true);if(!n)return;const p=normPath(n);
+ if(!p||!depthOk(p))return toast(`Máximo ${MAXD} niveles de carpetas`);
+ const prevs=cards.filter(c=>sel.has(c.id)).map(c=>[c,c.category]);prevs.forEach(([c])=>c.category=catOf(p));sel.clear();save();render();
+ toast('Tarjetas movidas',{label:'Deshacer',fn:()=>{prevs.forEach(([c,o])=>c.category=o);save();render()}})};
 
-            <button id="adminBtn">
-                Administrar
-            </button>
+/* ===== 8. Agregar (BLOQUE: / P: / R:) ===== */
+const COURSES=['Razonamiento Verbal','Lenguaje','Literatura','Biología','Anatomía y Fisiología','Física (fórmulas)','Química (fórmulas)','Historia Universal','Historia del Perú','Geografía y Ambiente','Economía','Formación Ciudadana','Educación Cívica','Actualidad'];
+$('#courseList').replaceChildren(...COURSES.map(n=>el('option',{value:n})));
+function parse(txt,dest){let cat=dest||'Sin categoría',qq=null,a=null,ql=0;const out=[],err=[];
+ const close=()=>{if(qq&&a)out.push({category:cat,question:qq,answer:a,line:ql});else if(qq)err.push(`Línea ${ql}: la pregunta no tiene respuesta.`);qq=a=null};
+ txt.split(/\r?\n/).forEach((raw,i)=>{const s=raw.trim(),n=i+1;if(!s)return;if(/<\/?[a-z][\s\S]*>/i.test(s)){err.push(`Línea ${n}: no se permite HTML.`);return}
+  if(s.startsWith('BLOQUE:')){close();const b=normPath(s.slice(7));cat=!b?(dest||'Sin categoría'):(b.includes(SEP)||!dest)?b:dest;
+   if(b&&b.split(SEP).length>MAXD)err.push(`Línea ${n}: la ruta tiene más de ${MAXD} niveles.`)}
+  else if(s.startsWith('P:')){close();qq=s.slice(2).trim();ql=n;if(!qq)err.push(`Línea ${n}: pregunta vacía.`)}
+  else if(s.startsWith('R:')){if(!qq)err.push(`Línea ${n}: respuesta sin pregunta.`);else a=s.slice(2).trim()}
+  else if(a!==null)a+='\n'+s;else err.push(`Línea ${n}: formato desconocido.`)});close();return{out,err}}
+const destFolder=()=>{const p=normPath($('#dest').value);return p&&depthOk(p)?p:null};
+const chatPrompt=()=>{const d=destFolder(),b=d?d+SEP:'';return `Actúa como corrector y editor de flashcards para un examen de admisión. Te pegaré texto generado por NotebookLM. Conviértelo en flashcards con estas reglas:
+1. Corrige los errores conceptuales e imprecisiones del texto. No inventes datos.
+2. Ignora introducciones, cierres, emojis y la numeración de los temas.
+3. UNA sola idea por tarjeta: si una respuesta es larga, divídela en varias tarjetas.
+4. Puedes usar **negrita**, *cursiva* y listas con "-" dentro de las respuestas.
+5. Devuelve SOLO las tarjetas, sin comentarios, con este formato exacto y una línea vacía entre tarjetas:
 
-            <button id="dashboardBtn">
-                Dashboard
-            </button>
+BLOQUE: ${b}[curso] > [grupo] > [tema]
+P: pregunta
+R: respuesta
 
-        </nav>
+Ejemplo de BLOQUE: ${b}Razonamiento Verbal > Semántica > Etimología
+La ruta de BLOQUE empieza con "${d||'(sin carpeta de destino)'}" y sigue con los títulos de curso (#), grupo (##) y tema (###) del texto, sin numeración. Máximo ${MAXD} niveles en total; si se pasa, omite el nivel de grupo.
 
-    </header>
+TEXTO DE NOTEBOOKLM:
+[pega aquí]`};
+const nbPrompt=()=>{const l=$('#nbIn').value.split(',').map(s=>s.trim()).filter(Boolean),n={pocas:'pocas preguntas por tema (3 a 5)',normal:'una cantidad normal de preguntas por tema (6 a 10)',extenso:'un conjunto extenso de preguntas por tema (12 a 20)'}[$('#nbQty').value];
+ return `Usa únicamente mis fuentes (el temario del examen de admisión). Quiero practicar: ${l.join(', ')||'[escribe el curso]'}.
+Genera flashcards de TODOS los temas del temario que correspondan ${l.length>1?'a cada uno de esos cursos, por separado y en el orden indicado':'a ese curso'}, sin omitir ninguno y respetando su numeración. Genera ${n}.
+Las preguntas deben ser de calidad para examen de admisión: una sola idea por pregunta; que mezclen definiciones, diferencias entre conceptos, reconocimiento con ejemplos y casos de aplicación; y que incluyan los errores o confusiones frecuentes. Evita las preguntas obvias o que se respondan con una sola palabra.
+Formato: un título # por curso, ## por grupo de temas, ### por tema, y debajo de cada tema sus tarjetas con "Pregunta:" y "Respuesta:". No pongas introducción ni cierre.
+Si la respuesta es demasiado larga, envíala en partes y espera a que yo escriba "Continúa".`};
+function renderAdd(){$('#prompt').textContent=chatPrompt();$('#nbPrompt').textContent=nbPrompt();const sl=$('#nbIn').value.split(',').map(s=>s.trim()).filter(Boolean);
+ $('#nbChips').replaceChildren(...COURSES.map(n=>el('button',{class:'chip',type:'button','aria-pressed':String(sl.includes(n)),onclick:()=>{$('#nbIn').value=(sl.includes(n)?sl.filter(x=>x!==n):[...sl,n]).join(', ');renderAdd()}},n)))}
+$('#nbIn').oninput=renderAdd;$('#nbQty').onchange=renderAdd;$('#dest').oninput=()=>{renderAdd();$('#input').oninput()};
+$('#copyPrompt').onclick=()=>copyText($('#prompt').textContent);$('#copyNb').onclick=()=>copyText($('#nbPrompt').textContent);
+$('#input').oninput=()=>{const t=$('#input').value,v=$('#validation');v.replaceChildren();$('#preview').replaceChildren();pv=null;$('#create').disabled=!t.trim();if(!t.trim())return;
+ const r=parse(t,destFolder());v.append(el('div',{class:'msg '+(r.err.length?'err':'ok')},r.err.length?`${r.err.length} error(es): `+r.err.slice(0,5).join(' '):`Formato válido: ${r.out.length} tarjetas en ${new Set(r.out.map(c=>segs(c.category).join(SEP))).size} carpeta(s).`))};
+$('#clear').onclick=()=>{$('#input').value='';$('#input').oninput()};
+$('#create').onclick=()=>{const r=parse($('#input').value,destFolder()),k=new Set(cards.map(c=>norm(c.question)+'|'+norm(c.answer))),seen=new Set(),g=new Map(),ex=new Set(allFolders());
+ r.out.forEach(c=>{const x=norm(c.question)+'|'+norm(c.answer);c.dup=k.has(x)||seen.has(x);seen.add(x);const f=segs(c.category).join(SEP);(g.get(f)||g.set(f,[]).get(f)).push(c)});pv=r;
+ const nw=r.out.filter(c=>!c.dup).length;
+ $('#preview').replaceChildren(el('div',{class:'panel',role:'region','aria-label':'Vista previa'},el('h2',{},'Vista previa'),
+  el('p',{style:'margin-bottom:12px'},`Se crearán ${nw} tarjetas nuevas en ${g.size} carpeta(s). ${r.out.length-nw} duplicadas se omitirán.`),
+  ...[...g].sort((a,b)=>a[0].localeCompare(b[0],'es')).map(([f,l])=>{const d=l.filter(c=>c.dup).length;return el('details',{style:`margin-left:${(f.split(SEP).length-1)*12}px`},
+   el('summary',{style:'min-height:44px;cursor:pointer'},`${ex.has(f)?'':'Nueva · '}${f} — ${l.length-d} nuevas${d?`, ${d} duplicadas`:''}`),el('ul',{class:'pv'},...l.map(c=>el('li',{},c.question+' ',c.dup?el('b',{class:'tag'},'duplicada'):null))))}),
+  r.err.length?el('div',{class:'msg err',role:'alert'},el('b',{},'Errores de formato:'),el('ul',{class:'pv'},...r.err.slice(0,30).map(e=>el('li',{},e)))):null,
+  el('div',{class:'row'},el('button',{class:'btn pri',type:'button',disabled:!!r.err.length||!nw,onclick:confirmAdd},'Confirmar y crear'),btn('Cancelar',()=>$('#preview').replaceChildren()))))};
+function confirmAdd(){if(!pv||pv.err.length)return;const n=pv.out.filter(c=>!c.dup).map(c=>clean({category:catOf(segs(c.category).join(SEP)),question:c.question,answer:c.answer})),dup=pv.out.length-n.length;
+ if(!n.length)return;cards.push(...n);save();$('#input').value='';$('#input').oninput();go('study');toast(`${n.length} agregadas`+(dup?` · ${dup} duplicadas omitidas`:''))}
 
-    <main id="app">
+/* ===== 9. Progreso, ajustes y copias ===== */
+function download(text,name){const a=el('a',{href:URL.createObjectURL(new Blob([text],{type:'application/json'})),download:name});a.click();URL.revokeObjectURL(a.href)}
+function renderStats(){const root=$('#v-stats'),m=dayCounts(),today=reviewsOn(dayKey(new Date())),dueN=cards.filter(isDue).length,total=[...m.values()].reduce((a,b)=>a+b,0);
+ const WEEKS=26,now=new Date(),start=new Date(now);start.setDate(now.getDate()-(WEEKS-1)*7-(now.getDay()+6)%7);
+ const cells=[];for(let i=0;i<WEEKS*7;i++){const d=new Date(start);d.setDate(start.getDate()+i);const n=m.get(dayKey(d))||0,fut=d>now;
+  cells.push(el('div',{class:'cell'+(fut?' f':''),'data-l':n?n<5?1:n<10?2:n<20?3:4:0,title:`${d.toLocaleDateString('es',{day:'numeric',month:'short'})}: ${n} repasos`}))}
+ const heat=el('div',{class:'heat','aria-hidden':'true'},...cells),wrap=el('div',{class:'heatwrap'},heat);
+ const decks=[...new Set(cards.map(c=>topOf(c)))].sort((a,b)=>a.localeCompare(b,'es'));
+ const num=(label,key,min,max)=>el('label',{class:'fld'},label,el('input',{type:'number',min,max,inputmode:'numeric',value:S[key],onchange:e=>{S[key]=Math.min(max,Math.max(min,Math.round(+e.target.value)||0));e.target.value=S[key];saveS();toast('Ajuste guardado')}}));
+ root.replaceChildren(el('div',{class:'bar'},el('h1',{},'Progreso')),
+  el('div',{class:'kpis'},el('div',{class:'panel kpi'},el('b',{},streakOf(m)),el('span',{},'días seguidos')),el('div',{class:'panel kpi'},el('b',{},dueN),el('span',{},'vencen hoy')),goalBar(today)),
+  el('div',{class:'panel'},el('h2',{},'Constancia'),el('p',{class:'mut',style:'margin-bottom:12px',role:'img','aria-label':`${total} repasos en los últimos 6 meses, en ${m.size} días`},`${total} repasos en ${m.size} días activos`),wrap,
+   el('div',{class:'legend','aria-hidden':'true'},'Menos',...[0,1,2,3,4].map(l=>el('div',{class:'cell','data-l':l})),'Más')),
+  el('div',{class:'panel'},el('h2',{},'Dominadas por mazo'),el('p',{class:'mut'},'Dominada: la próxima revisión está a 21 días o más.'),
+   ...(decks.length?decks.map(d=>{const a=cards.filter(c=>topOf(c)===d),mas=a.filter(isMastered).length,due=a.filter(isDue).length;
+    return el('div',{class:'drow',style:`--deck:${deckColor(d)}`},el('div',{class:'row sp'},el('b',{},d),el('span',{class:'mut'},`${mas}/${a.length} dominadas${due?` · ${due} hoy`:''}`)),
+     el('div',{class:'track',role:'progressbar','aria-label':'Dominadas en '+d,'aria-valuemin':'0','aria-valuemax':String(a.length),'aria-valuenow':String(mas)},el('i',{style:`width:${mas/a.length*100}%`})))}):[el('p',{class:'mut'},'Aún no hay mazos.')])),
+  el('div',{class:'panel'},el('h2',{},'Ajustes de estudio'),num('Tarjetas nuevas por día',  'newPerDay',0,200),num('Meta diaria de repasos','goal',1,500),
+   el('label',{class:'fld chk'},el('input',{type:'checkbox',checked:S.typed,onchange:e=>{S.typed=e.target.checked;saveS()}}),'Escribir mi respuesta antes de voltear'),
+   el('label',{class:'fld chk'},el('input',{type:'checkbox',checked:S.warm,onchange:e=>{S.warm=e.target.checked;saveS()}}),'Calentamiento de 5 minutos con los fallos de ayer')),
+  el('div',{class:'panel'},el('h2',{},'Copia de seguridad'),fileBlock(),el('p',{class:'mut',style:'margin-bottom:12px'},'Además se guardan en este navegador. Exporta una copia con regularidad.'),
+   el('div',{class:'row'},btn('Exportar JSON',doExport),btn('Importar JSON',()=>$('#file').click()))));
+ wrap.scrollLeft=wrap.scrollWidth}
+function openImport(text){try{const x=JSON.parse(text),a=Array.isArray(x)?x:x.cards;pending=a.map(clean).filter(c=>c.question&&c.answer);if(!pending.length)throw 0;pendF=Array.isArray(x.folders)?x.folders.filter(f=>typeof f==='string').map(normPath).filter(Boolean):[];pendSug=Array.isArray(x.suggs)?x.suggs.map(cleanSug).filter(Boolean):[];
+ $('#iInfo').textContent=`La copia contiene ${pending.length} tarjetas${pendSug.length?` y ${pendSug.length} sugerencia(s)`:''}.`;$('#impDlg').returnValue='';$('#impDlg').showModal()}catch{pending=null;toast('La copia no es válida')}}
+$('#file').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f||f.size>10e6)return toast('Archivo inválido o demasiado grande');
+ const rd=new FileReader();rd.onload=()=>openImport(rd.result);rd.readAsText(f)};
+$('#impDlg').addEventListener('close',()=>{const v=$('#impDlg').returnValue,lh=linkPendingH;linkPendingH=null;if(!pending||(v!=='replace'&&v!=='merge'))return;if(lh)attachFile(lh);
+ if(v==='replace'){const prev=cards,pf=S.folders,ps=S.suggs;cards=pending;S.folders=[...pendF];S.suggs=[...pendSug];loadError=null;save();render();toast('Copia importada',{label:'Deshacer',fn:()=>{cards=prev;S.folders=pf;S.suggs=ps;save();render()}})}
+ else{const k=new Set(cards.map(c=>norm(c.question)+'|'+norm(c.answer)));let n=0;pending.forEach(c=>{const x=norm(c.question)+'|'+norm(c.answer);if(!k.has(x)){cards.push(c);k.add(x);n++}});{const ks=new Set(S.suggs.map(x=>x.id));pendSug.forEach(x=>{if(!ks.has(x.id)){S.suggs.push(x);ks.add(x.id)}})}S.folders=[...new Set([...S.folders,...pendF])];loadError=null;save();render();toast(`${n} tarjetas combinadas`)}pending=null});
 
-    </main>
 
-    ./js/app.jsscript>
+/* ===== 9b. Sugerencias ===== */
+let sugText='',sugCat='Funciones';
+function addSug(){const t=sugText.trim();if(!t)return toast('Escribe tu sugerencia primero');
+ S.suggs.unshift(cleanSug({text:t,cat:sugCat,at:new Date().toISOString()}));sugText='';save();render();toast('Sugerencia guardada')}
+function delSug(id){const i=S.suggs.findIndex(x=>x.id===id);if(i<0)return;const g=S.suggs[i];S.suggs.splice(i,1);save();render();
+ toast('Sugerencia eliminada',{label:'Deshacer',fn:()=>{S.suggs.splice(Math.min(i,S.suggs.length),0,g);save();render()}})}
+function copySug(){if(!S.suggs.length)return toast('No hay sugerencias para copiar');
+ navigator.clipboard.writeText('SUGERENCIAS PARA MEJORAR FICHA:\n'+S.suggs.map((x,i)=>`${i+1}. [${x.cat}] ${x.text} (${new Date(x.at).toLocaleDateString('es')})`).join('\n')).then(()=>toast('Sugerencias copiadas')).catch(()=>toast('No se pudo copiar'))}
+function renderSug(){const root=$('#v-sug');
+ const ta=el('textarea',{rows:'3',maxlength:'500',placeholder:'Ej.: que Progreso muestre también las tarjetas nuevas de la semana\u2026','aria-label':'Tu sugerencia',oninput:e=>{sugText=e.target.value}});ta.value=sugText;
+ const sel=el('select',{'aria-label':'Tipo de sugerencia',onchange:e=>{sugCat=e.target.value}},...SUGCATS.map(c=>el('option',{value:c},c)));sel.value=sugCat;
+ const form=el('div',{class:'panel'},el('h2',{style:'margin-bottom:12px'},'¿Qué mejorarías?'),
+  el('p',{class:'mut',style:'margin-bottom:12px'},'Anota tus ideas para mejorar la app. Quedan guardadas en este dispositivo y dentro de tus copias de seguridad.'),
+  el('label',{class:'fld'},'Tipo',sel),el('label',{class:'fld'},'Tu sugerencia',ta),btn('Agregar sugerencia',addSug,'pri'));
+ const list=S.suggs.length?el('div',{},el('div',{class:'bar'},el('h2',{},`Guardadas (${S.suggs.length})`),btn('Copiar todas',copySug)),
+   ...S.suggs.map(x=>el('div',{class:'item',style:'grid-template-columns:1fr auto'},el('div',{},el('div',{},x.text),
+    el('div',{},el('span',{class:'tag'},x.cat),el('span',{class:'tag'},new Date(x.at).toLocaleDateString('es',{day:'numeric',month:'short',year:'numeric'})))),
+    el('button',{class:'ic',type:'button','aria-label':'Eliminar sugerencia',onclick:()=>delSug(x.id)},'\u2715'))))
+  :empty('Todavía no hay sugerencias','Cuando se te ocurra una mejora, anótala aquí para no perderla.');
+ root.replaceChildren(el('div',{class:'bar'},el('div',{},el('span',{class:'eyebrow'},'Buzón'),el('h1',{},'Sugerencias'))),form,list)}
 
-</body>
-
-</html>
+/* ===== 10. Navegación y arranque ===== */
+function go(v){view=v;sel.clear();render();$('#main').focus({preventScroll:true});scrollTo(0,0)}
+$$('#nav .nv').forEach(b=>b.onclick=()=>go(b.dataset.v));
+function render(){if(loadError)view='study';if(deck!==ROOT&&((deck===FOLL&&!failedToday().length)||(deck!==FOLL&&!allFolders().includes(deck))))deck=ROOT;
+ if(S.lastDeck!==deck){S.lastDeck=deck;saveS()}$('#folderList').replaceChildren(...allFolders().map(v=>el('option',{value:v})));renderBanner();
+ $$('main>section').forEach(s=>s.hidden=s.id!=='v-'+view);$$('#nav .nv').forEach(b=>b.dataset.v===view?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current'));
+ ({study:renderStudy,lib:renderLib,add:renderAdd,stats:renderStats,sug:renderSug})[view]()}
+applyTheme();matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(!S.theme)applyTheme()});
+render();initFile();
+</script></body></html>
