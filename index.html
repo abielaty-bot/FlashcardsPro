@@ -781,7 +781,7 @@ Cuando te pidan EXPLICAR algo, responde en lenguaje simple, máximo 6 líneas, c
 async function gemCall(messages){
  const key=(S.gemKey||'').trim();if(!key)throw new Error('Primero pega tu clave gratuita de Gemini.');
  const tried=new Set(),queue=[],push=m=>{if(m&&!tried.has(m)&&!queue.includes(m))queue.push(m)};
- push(S.gemModel);GEM_CHAIN.forEach(push);let lastMsg='';
+ push(S.gemModel);GEM_CHAIN.forEach(push);let lastMsg='',lastCode=0;
  while(queue.length&&tried.size<8){
   const model=queue.shift();tried.add(model);
   const ctl=new AbortController(),to=setTimeout(()=>ctl.abort(),90000);
@@ -789,9 +789,9 @@ async function gemCall(messages){
    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`,{method:'POST',signal:ctl.signal,headers:{'Content-Type':'application/json'},body:JSON.stringify({systemInstruction:{parts:[{text:aiSys()}]},contents:messages,generationConfig:{temperature:0.7,maxOutputTokens:8192}})});
    clearTimeout(to);
    const j=await r.json().catch(()=>null);
-   if(r.status===404){lastMsg=(j&&j.error&&j.error.message)||'Modelo no encontrado';
-    const sug=((lastMsg.match(/gemini-[a-z0-9.\-]+/gi)||[]).map(x=>x.toLowerCase())).find(x=>x!==model);
-    if(sug)push(sug);continue}
+   if(r.status===404||r.status===429||r.status===503){lastMsg=(j&&j.error&&j.error.message)||('Error '+r.status);lastCode=r.status;
+    if(r.status===404){const sug=((lastMsg.match(/gemini-[a-z0-9.\-]+/gi)||[]).map(x=>x.toLowerCase())).find(x=>x!==model);if(sug)push(sug)}
+    continue}
    if(!r.ok)throw new Error((j&&j.error&&j.error.message)||('Error '+r.status));
    const txt=((j&&j.candidates&&j.candidates[0]&&j.candidates[0].content&&j.candidates[0].content.parts)||[]).map(p=>p.text||'').join('').trim();
    if(!txt)throw new Error('La IA no devolvió texto. Intenta de nuevo.');
@@ -799,7 +799,7 @@ async function gemCall(messages){
    return txt;
   }catch(e){clearTimeout(to);if(e&&e.name==='AbortError')throw new Error('La IA tardó demasiado. Revisa tu internet e intenta de nuevo.');throw e}
  }
- throw new Error('Ningún modelo de IA respondió. Último mensaje de Google: '+lastMsg)}
+ throw new Error(lastCode===429||lastCode===503?'Los servidores de Google están saturados en este momento. Espera un minuto e intenta de nuevo.':'Ningún modelo de IA respondió. Último mensaje de Google: '+lastMsg)}
 function aiBubble(role,text){
  const kids=[el('div',{},text)];
  if(role==='a'){const r=parseFlex(text);if(r.out.length)kids.push(el('div',{class:'row',style:'margin-top:8px'},btn(`Guardar estas ${r.out.length} tarjetas`,()=>aiSave(text),'pri')))}
