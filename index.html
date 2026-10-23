@@ -453,7 +453,7 @@ function stopSpeak(){if('speechSynthesis' in window)speechSynthesis.cancel()}
 function speakCurrent(){const c=current();if(!c||!('speechSynthesis' in window))return;stopSpeak();
  const t=!flipped?(session.rev?c.answer:c.question):(session.rev?c.question:c.answer)+(c.note?'. Nota: '+plain(c.note):'');
  const u=new SpeechSynthesisUtterance(plain(t));u.lang='es-ES';const v=speechSynthesis.getVoices().find(v=>v.lang&&v.lang.toLowerCase().startsWith('es'));if(v)u.voice=v;speechSynthesis.speak(u)}
-function viewSession(root){const c=current(),pct=session.done/session.total*100,fill=el('i',{style:`width:${prevPct}%`}),rep=!!(session.st[c.id]&&session.st[c.id].n),sst=session.st[c.id]||{ok:0},learnA=S.learn!==false&&!session.rev&&c.ratingCount===0;
+function viewSession(root){const c=current(),pct=session.done/session.total*100,fill=el('i',{style:`width:${prevPct}%`}),sst=session.st[c.id]||{ok:0},intenA=S.learn!==false&&!session.rev,rep=!!sst.n&&!(intenA&&!sst.grad);
  const face=(cls,gif,...kids)=>el('article',{class:'face '+cls,...(cls==='back'&&!flipped?{'aria-hidden':'true'}:{}),...(cls==='front'&&flipped?{'aria-hidden':'true'}:{})},
   el('div',{class:'head'},el('span',{},el('i',{class:'dot'}),key(c),c.failCount>=3?el('b',{class:'bdg'},'terca'):null,c.verify?el('b',{class:'bdg'},'verificar'):null),emoSpan(gif,56)),...kids);
  const txt=(cls,t)=>el('div',{class:cls+(t.length>160?' long':'')+' md'},...md(t));
@@ -466,7 +466,7 @@ function viewSession(root){const c=current(),pct=session.done/session.total*100,
  const dock=el('div',{class:'dock'},
   el('div',{id:'reveal',class:'stack',hidden:flipped},box,el('button',{class:'btn pri big',type:'button',onclick:flip},'Mostrar respuesta',el('kbd',{},'Espacio'))),
   el('div',{id:'rates',class:'rates',role:'group','aria-label':'¿La sabías?',hidden:!flipped},
-   ...RATES.map(([r,l],i)=>{const t=session.rev||rep?'refuerzo':learnA?(r==='good'&&sst.ok<1?'hoy':fmtInt(schedule(c,r).interval)):fmtInt(schedule(c,r).interval);return el('button',{class:'rate',type:'button','data-r':r,'aria-label':`${l}, ${session.rev||rep?'refuerzo en esta sesión':'vuelve en '+t}`,onclick:()=>rate(r)},el('span',{},l,el('kbd',{},i+1)),el('small',{},t))})));
+   ...RATES.map(([r,l],i)=>{const t=session.rev||rep?'refuerzo':intenA?(r==='easy'||(r==='good'&&sst.ok>=1)?fmtInt(schedule(c,r).interval):'hoy'):fmtInt(schedule(c,r).interval);return el('button',{class:'rate',type:'button','data-r':r,'aria-label':`${l}, ${session.rev||rep?'refuerzo en esta sesión':t==='hoy'?'vuelve hoy':'vuelve en '+t}`,onclick:()=>rate(r)},el('span',{},l,el('kbd',{},i+1)),el('small',{},t))})));
  rc(root,
   el('div',{class:'bar'},el('div',{},el('span',{class:'eyebrow'},'Sesión'+(session.rev?' · Inversa':'')),el('h1',{style:'font-size:var(--t-xl)'},session.title||'Sesión')),
    el('div',{class:'row',style:'align-items:center'},el('span',{class:'mut',role:'status'},`${session.done+1} / ${session.total}`),btn('Salir',()=>{stopSpeak();session=null;flipped=false;render()}))),
@@ -484,26 +484,26 @@ function flip(){const c=current();if(!c||busy)return;flipped=!flipped;
  if(flipped)announce('Respuesta: '+(session.rev?c.question:c.answer))}
 function rate(r){const c=current();if(!c||!flipped||busy)return;busy=true;stopSpeak();
  const s=session,st=s.st[c.id]||(s.st[c.id]={n:0,ok:0,bad:false}),first=!st.n,fail=isFail(r),days=schedule(c,r).interval;
- const rev=!!s.rev,learn=!rev&&S.learn!==false&&c.ratingCount===0;let graduated=false;
+ const rev=!!s.rev,inten=!rev&&S.learn!==false;let graduated=false;
  if(rev){if(fail){st.ok=0;st.bad=true;s.failed.add(c.id)}else st.ok++}
- else if(learn){
-  if(r==='easy'){applyRating(c,r);graduated=true}
-  else if(!fail){st.ok++;if(st.ok>=2){applyRating(c,r);graduated=true}}
+ else if(inten){
+  if(r==='easy'){applyRating(c,r);graduated=true;st.grad=true}
+  else if(!fail){st.ok++;if(st.ok>=2){applyRating(c,r);graduated=true;st.grad=true}}
   else{st.ok=0;st.bad=true;s.failed.add(c.id)}}
  else if(first){applyRating(c,r);if(fail)c.due=new Date().toISOString()}
  else{const now=new Date().toISOString();Object.assign(c,{lastRating:LEGACY[r],lastReviewedAt:now});c.ratingCount++;c.reviewHistory.push({rating:r,reviewedAt:now,interval:c.interval,reinforce:true})}
  st.n++;
- if(!rev&&!learn){
+ if(!rev&&!inten){
   if(fail){st.ok=0;st.bad=true;c.failCount=(c.failCount||0)+1;c.okRun=0;s.failed.add(c.id)}
   else{st.ok++;if(c.okSid!==s.sid){c.okSid=s.sid;c.okRun=(c.okRun||0)+1;if(c.okRun>=2)c.failCount=0}}}
  save();s.r[r]++;s.ids.shift();
- const requeue=learn?!graduated:(fail||(st.bad&&st.ok<2));
+ const requeue=inten?!graduated:(fail||(st.bad&&st.ok<2));
  if(requeue)s.ids.splice(Math.min(s.ids.length,4+(Math.random()<.5?1:0)),0,c.id);else s.done++;
  if(s.until&&Date.now()>s.until)s.ids=[];
- const f=$('#fb'),lbl=rev?'refuerzo':learn?(graduated?`vuelve en ${fmtInt(days)}`:'sigue hoy'):fail?'vuelve hoy':first?`vuelve en ${fmtInt(days)}`:'refuerzo';
+ const f=$('#fb'),lbl=rev?'refuerzo':inten?(graduated?`vuelve en ${fmtInt(days)}`:'sigue hoy'):fail?'vuelve hoy':first?`vuelve en ${fmtInt(days)}`:'refuerzo';
  f.replaceChildren(emoSpan(FB[r][0],34),el('span',{},`${FB[r][1]} · ${lbl}`));
  f.hidden=false;f.classList.remove('show');void f.offsetWidth;f.classList.add('show');clearTimeout(fbT);fbT=setTimeout(()=>f.hidden=true,1100);
- announce(`${FB[r][1]}. ${rev?'Refuerzo registrado':learn?(graduated?'Vuelve en '+fmtInt(days):'Sigue en esta sesión'):fail?'Reaparece en esta sesión':first?'Vuelve en '+fmtInt(days):'Bien, refuerzo registrado'}`);
+ announce(`${FB[r][1]}. ${rev?'Refuerzo registrado':inten?(graduated?'Vuelve en '+fmtInt(days):'Sigue en esta sesión'):fail?'Reaparece en esta sesión':first?'Vuelve en '+fmtInt(days):'Bien, refuerzo registrado'}`);
  $('#card').classList.add('out');
  setTimeout(()=>{flipped=false;typed='';busy=false;enter=true;render()},wait(200))}
 function viewDone(root){const r=session.r,n=r.again+r.hard+r.good+r.easy,rec=n?Math.round((n-r.again-r.hard)/n*100):0,f=[...session.failed].filter(i=>cards.some(c=>c.id===i));
@@ -646,7 +646,7 @@ function renderStats(){const root=$('#v-stats'),m=dayCounts(),today=reviewsOn(da
   el('div',{class:'panel'},el('h2',{},'Ajustes de estudio'),num('Tarjetas nuevas por día',  'newPerDay',0,200),num('Meta diaria de repasos','goal',1,500),
    el('label',{class:'fld chk'},el('input',{type:'checkbox',checked:S.typed,onchange:e=>{S.typed=e.target.checked;saveS()}}),'Escribir mi respuesta antes de voltear'),
    el('label',{class:'fld chk'},el('input',{type:'checkbox',checked:S.warm,onchange:e=>{S.warm=e.target.checked;saveS()}}),'Calentamiento de 5 minutos con los fallos de ayer'),
-   el('label',{class:'fld chk'},el('input',{type:'checkbox',checked:S.learn!==false,onchange:e=>{S.learn=e.target.checked;saveS()}}),'Aprender las nuevas en la misma sesión: vuelven hasta acertarlas 2 veces antes de pasar a días')),
+   el('label',{class:'fld chk'},el('input',{type:'checkbox',checked:S.learn!==false,onchange:e=>{S.learn=e.target.checked;saveS()}}),'Modo intensivo: toda tarjeta vuelve en la sesión hasta acertarla 2 veces seguidas; solo «Lo sabía al toque» sale al instante')),
   el('div',{class:'panel'},el('h2',{},'Copia de seguridad'),fileBlock(),el('p',{class:'mut',style:'margin-bottom:12px'},'Además se guardan en este navegador. Exporta una copia con regularidad.'),
    el('div',{class:'row'},btn('Exportar JSON',doExport),btn('Importar JSON',()=>$('#file').click()))));
  wrap.scrollLeft=wrap.scrollWidth}
