@@ -160,7 +160,17 @@ fieldset{border:0;padding:0;display:grid;gap:var(--s2)}legend{font:600 var(--t-s
 @keyframes emo-blink{0%,82%,100%{transform:scaleY(1)}90%,93%{transform:scaleY(.1)}}
 .emo-facil .a{transform-box:view-box;transform-origin:32px 64px;animation:emo-hop 1.8s ease-in-out infinite}
 @keyframes emo-hop{0%,100%{transform:translateY(0) scale(1,1)}15%{transform:translateY(0) scale(1.06,.93)}45%{transform:translateY(-4px) scale(.97,1.04)}75%{transform:translateY(0) scale(1.03,.97)}}
-@media (prefers-reduced-motion:reduce){[class^="emo-"] *{animation:none!important}}
+.face .emo{cursor:pointer}
+.face .emo:hover .emo-pregunta .a{animation-duration:1.1s}
+.face .emo:hover .emo-respuesta .l,.face .emo:hover .emo-respuesta .h{animation-duration:1.1s}
+.face .emo:hover .emo-dificil .d{animation-duration:.9s}
+.face .emo:hover .emo-regular .a{animation-duration:1.4s}
+.face .emo:hover .emo-facil .a{animation-duration:.9s}
+.emo.boing{animation:emo-boing .55s cubic-bezier(.2,.7,.2,1);transform-origin:50% 85%}
+@keyframes emo-boing{0%{transform:scale(1,1)}30%{transform:scale(1.15,.85)}55%{transform:scale(.92,1.12) translateY(-6px)}75%{transform:scale(1.04,.96)}100%{transform:scale(1,1)}}
+.fb .emo{animation:emo-pop .45s cubic-bezier(.2,.7,.2,1);transform-origin:50% 85%}
+@keyframes emo-pop{0%{transform:scale(.3) rotate(-14deg)}60%{transform:scale(1.18) rotate(4deg)}100%{transform:scale(1) rotate(0)}}
+@media (prefers-reduced-motion:reduce){[class^="emo-"] *{animation:none!important}.emo.boing,.fb .emo{animation:none!important}}
 </style></head><body>
 <a class="skip" href="#main">Saltar al contenido</a>
 <div class="app">
@@ -448,6 +458,8 @@ dificil:`<svg class="emo-dificil" viewBox="0 0 64 64" width="40" height="40" rol
 regular:`<svg class="emo-regular" viewBox="0 0 64 64" width="40" height="40" role="img" aria-label="Regular"><circle cx="32" cy="40" r="24" fill="#FFCA28" stroke="#F2A900" stroke-width="1.2"/><g class="a" fill="#4E342E"><ellipse cx="23" cy="38" rx="3.2" ry="4.2"/><ellipse cx="41" cy="38" rx="3.2" ry="4.2"/></g><g fill="none" stroke="#4E342E" stroke-width="2.4" stroke-linecap="round"><path d="M17 29H28M36 29H47"/><path d="M24 51H40"/></g></svg>`,
 facil:`<svg class="emo-facil" viewBox="0 0 64 64" width="40" height="40" role="img" aria-label="Fácil"><g class="a"><circle cx="32" cy="40" r="24" fill="#FFCA28" stroke="#F2A900" stroke-width="1.2"/><g fill="none" stroke="#4E342E" stroke-width="2.8" stroke-linecap="round"><path d="M16 39Q22 29 28 39"/><path d="M36 39Q42 29 48 39"/></g><path d="M19 46H45Q45 59 32 59Q19 59 19 46Z" fill="#4E342E"/><ellipse cx="32" cy="55" rx="6" ry="3" fill="#E57373"/><rect x="21" y="46" width="22" height="3.5" rx="1" fill="#fff"/></g></svg>`};
 function emoSpan(n,size){const w=el('span',{class:'emo',style:`width:${size}px;height:${size}px`});w.innerHTML=EMOS[n]||'';return w}
+function faceEmo(cls,gif){const w=emoSpan(gif,84);w.onclick=e=>{e.stopPropagation();w.classList.remove('boing');void w.offsetWidth;w.classList.add('boing')};if(cls==='back')w.classList.add('back-emo');return w}
+function swapBackEmo(r){const w=$('.back-emo');if(w)w.innerHTML=EMOS[r?FB[r][0]:'respuesta']||''}
 const plain=t=>String(t||'').replace(/\*\*/g,'').replace(/\*/g,'').replace(/^\s*[-*]\s+/gm,'').replace(/\s+/g,' ').trim();
 function stopSpeak(){if('speechSynthesis' in window)speechSynthesis.cancel()}
 function speakCurrent(){const c=current();if(!c||!('speechSynthesis' in window))return;stopSpeak();
@@ -455,7 +467,7 @@ function speakCurrent(){const c=current();if(!c||!('speechSynthesis' in window))
  const u=new SpeechSynthesisUtterance(plain(t));u.lang='es-ES';const v=speechSynthesis.getVoices().find(v=>v.lang&&v.lang.toLowerCase().startsWith('es'));if(v)u.voice=v;speechSynthesis.speak(u)}
 function viewSession(root){const c=current(),pct=session.done/session.total*100,fill=el('i',{style:`width:${prevPct}%`}),sst=session.st[c.id]||{ok:0},intenA=S.learn!==false&&!session.rev,rep=!!sst.n&&!(intenA&&!sst.grad);
  const face=(cls,gif,...kids)=>el('article',{class:'face '+cls,...(cls==='back'&&!flipped?{'aria-hidden':'true'}:{}),...(cls==='front'&&flipped?{'aria-hidden':'true'}:{})},
-  el('div',{class:'head'},el('span',{},el('i',{class:'dot'}),key(c),c.failCount>=3?el('b',{class:'bdg'},'terca'):null,c.verify?el('b',{class:'bdg'},'verificar'):null),emoSpan(gif,56)),...kids);
+  el('div',{class:'head'},el('span',{},el('i',{class:'dot'}),key(c),c.failCount>=3?el('b',{class:'bdg'},'terca'):null,c.verify?el('b',{class:'bdg'},'verificar'):null),faceEmo(cls,gif)),...kids);
  const txt=(cls,t)=>el('div',{class:cls+(t.length>160?' long':'')+' md'},...md(t));
  const front=face('front','pregunta',txt('q',session.rev?c.answer:c.question),el('p',{class:'hint'},'Toca la tarjeta o pulsa Espacio para ver la respuesta'));
  const back=face('back','respuesta',el('div',{class:'mine',id:'mine',hidden:true},el('small',{},'Tu respuesta'),el('p',{id:'mineT'})),txt('a',session.rev?c.question:c.answer),c.note?el('div',{class:'mine'},el('small',{},'Mi nota'),el('div',{class:'md'},...md(c.note))):null);
@@ -466,7 +478,7 @@ function viewSession(root){const c=current(),pct=session.done/session.total*100,
  const dock=el('div',{class:'dock'},
   el('div',{id:'reveal',class:'stack',hidden:flipped},box,el('button',{class:'btn pri big',type:'button',onclick:flip},'Mostrar respuesta',el('kbd',{},'Espacio'))),
   el('div',{id:'rates',class:'rates',role:'group','aria-label':'¿La sabías?',hidden:!flipped},
-   ...RATES.map(([r,l],i)=>{const t=session.rev||rep?'refuerzo':intenA?(r==='easy'||(r==='good'&&sst.ok>=1)?fmtInt(schedule(c,r).interval):'hoy'):fmtInt(schedule(c,r).interval);return el('button',{class:'rate',type:'button','data-r':r,'aria-label':`${l}, ${session.rev||rep?'refuerzo en esta sesión':t==='hoy'?'vuelve hoy':'vuelve en '+t}`,onclick:()=>rate(r)},el('span',{},l,el('kbd',{},i+1)),el('small',{},t))})));
+   ...RATES.map(([r,l],i)=>{const t=session.rev||rep?'refuerzo':intenA?(r==='easy'||(r==='good'&&sst.ok>=1)?fmtInt(schedule(c,r).interval):'hoy'):fmtInt(schedule(c,r).interval);return el('button',{class:'rate',type:'button','data-r':r,'aria-label':`${l}, ${session.rev||rep?'refuerzo en esta sesión':t==='hoy'?'vuelve hoy':'vuelve en '+t}`,onmouseenter:()=>swapBackEmo(r),onmouseleave:()=>swapBackEmo(null),onfocus:()=>swapBackEmo(r),onblur:()=>swapBackEmo(null),onclick:()=>rate(r)},el('span',{},l,el('kbd',{},i+1)),el('small',{},t))})));
  rc(root,
   el('div',{class:'bar'},el('div',{},el('span',{class:'eyebrow'},'Sesión'+(session.rev?' · Inversa':'')),el('h1',{style:'font-size:var(--t-xl)'},session.title||'Sesión')),
    el('div',{class:'row',style:'align-items:center'},el('span',{class:'mut',role:'status'},`${session.done+1} / ${session.total}`),btn('Salir',()=>{stopSpeak();session=null;flipped=false;render()}))),
@@ -501,7 +513,7 @@ function rate(r){const c=current();if(!c||!flipped||busy)return;busy=true;stopSp
  if(requeue)s.ids.splice(Math.min(s.ids.length,4+(Math.random()<.5?1:0)),0,c.id);else s.done++;
  if(s.until&&Date.now()>s.until)s.ids=[];
  const f=$('#fb'),lbl=rev?'refuerzo':inten?(graduated?`vuelve en ${fmtInt(days)}`:'sigue hoy'):fail?'vuelve hoy':first?`vuelve en ${fmtInt(days)}`:'refuerzo';
- f.replaceChildren(emoSpan(FB[r][0],34),el('span',{},`${FB[r][1]} · ${lbl}`));
+ f.replaceChildren(emoSpan(FB[r][0],44),el('span',{},`${FB[r][1]} · ${lbl}`));
  f.hidden=false;f.classList.remove('show');void f.offsetWidth;f.classList.add('show');clearTimeout(fbT);fbT=setTimeout(()=>f.hidden=true,1100);
  announce(`${FB[r][1]}. ${rev?'Refuerzo registrado':inten?(graduated?'Vuelve en '+fmtInt(days):'Sigue en esta sesión'):fail?'Reaparece en esta sesión':first?'Vuelve en '+fmtInt(days):'Bien, refuerzo registrado'}`);
  $('#card').classList.add('out');
