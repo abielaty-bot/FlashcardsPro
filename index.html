@@ -173,6 +173,18 @@ fieldset{border:0;padding:0;display:grid;gap:var(--s2)}legend{font:600 var(--t-s
 @media (prefers-reduced-motion:reduce){[class^="emo-"] *{animation:none!important}.emo.boing,.fb .emo{animation:none!important}}
 .ezday{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;text-align:left;margin-bottom:8px}
 .ezday[aria-pressed="true"]{border-color:var(--ok);box-shadow:0 0 0 1px var(--ok)}
+.aifab{position:fixed;right:14px;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom) + 14px);z-index:6;background:linear-gradient(135deg,var(--accent),#b04dff);color:#fff;border:0;border-radius:var(--r-full);padding:12px 18px;font-weight:700;font-size:var(--t-s);box-shadow:0 8px 24px rgba(0,0,0,.35);cursor:pointer}
+#aiDlg{width:min(560px,94vw);max-height:88dvh;border:1px solid var(--line);border-radius:18px;background:var(--surface);color:var(--text);padding:0}
+#aiDlg::backdrop{background:rgba(0,0,0,.5)}
+.aihead{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.aihead h2{margin:0;font-size:1.15rem}
+#aiBody{padding:14px 16px;overflow:auto}
+.ailog{display:flex;flex-direction:column;gap:10px;max-height:46dvh;overflow:auto;margin-bottom:12px}
+.aimsg{padding:10px 12px;border-radius:14px;white-space:pre-wrap;word-break:break-word;max-width:94%;line-height:1.5}
+.aimsg.u{align-self:flex-end;background:var(--accent);color:#fff}
+.aimsg.a{align-self:flex-start;background:var(--surface-2);border:1px solid var(--line)}
+.airow{display:flex;gap:8px}.airow input{flex:1}
+@media (min-width:900px){.aifab{bottom:24px}}
 </style></head><body>
 <a class="skip" href="#main">Saltar al contenido</a>
 <div class="app">
@@ -222,6 +234,8 @@ fieldset{border:0;padding:0;display:grid;gap:var(--s2)}legend{font:600 var(--t-s
 <div id="fb" class="fb" hidden aria-hidden="true"></div><div id="toast" role="status" hidden></div><div id="live" class="sr" aria-live="polite"></div>
 <input type="file" id="file" accept="application/json,.json" hidden>
 
+<button id="aiFab" class="aifab" type="button">✨ Asistente</button>
+<dialog id="aiDlg" aria-labelledby="aiT"><div class="aihead"><h2 id="aiT">Asistente de Ficha</h2><button class="ic" id="aiClose" type="button" aria-label="Cerrar asistente">✕</button></div><div id="aiBody"></div></dialog>
 <dialog id="dlg" aria-labelledby="dlgT"><form method="dialog"><h2 id="dlgT"></h2>
  <label>Carpeta (usa " > " entre niveles)<input id="fDeck" list="deckList" maxlength="160"></label><datalist id="deckList"></datalist>
  <label>Pregunta<textarea id="fQ" rows="3" maxlength="1000" required></textarea></label>
@@ -304,7 +318,7 @@ function clean(c){
 const SUGCATS=['Diseño','Funciones','Otra'];
 function cleanSug(x){if(!x||typeof x!=='object')return null;const t=String(x.text||'').trim().slice(0,500);if(!t)return null;
  return{id:String(x.id||uid()),text:t,cat:SUGCATS.includes(x.cat)?x.cat:'Otra',at:/^\d{4}-\d{2}-\d{2}T/.test(String(x.at))?String(x.at):new Date().toISOString()}}
-let S={theme:null,newPerDay:10,goal:20,typed:false,lastDeck:null,savedAt:0,folders:[],warm:false,lastExportAt:0,lastFileAt:0,v4At:0,suggs:[],learn:true};
+let S={theme:null,newPerDay:10,goal:20,typed:false,lastDeck:null,savedAt:0,folders:[],warm:false,lastExportAt:0,lastFileAt:0,v4At:0,suggs:[],learn:true,gemKey:'',gemModel:'gemini-2.0-flash'};
 let fileH=null,fileState='none',wT,linkPendingH=null;
 try{Object.assign(S,JSON.parse(localStorage.getItem(KEY_S)||'{}'))}catch{}
 S.folders=(Array.isArray(S.folders)?S.folders:[]).filter(f=>typeof f==='string').map(normPath).filter(Boolean);S.v4At=S.v4At||Date.now();
@@ -749,6 +763,94 @@ $('#create').onclick=()=>{const r=parse($('#input').value,destFolder()),k=new Se
 function confirmAdd(){if(!pv||pv.err.length)return;const n=pv.out.filter(c=>!c.dup).map(c=>clean({category:catOf(segs(c.category).join(SEP)),question:c.question,answer:c.answer})),dup=pv.out.length-n.length;
  if(!n.length)return;cards.push(...n);save();$('#input').value='';$('#input').oninput();go('study');toast(`${n.length} agregadas`+(dup?` · ${dup} duplicadas omitidas`:''))}
 
+
+/* ===== 8.9 Asistente IA (Gemini, clave solo en este navegador) ===== */
+const GEM_FALLBACK=['gemini-2.0-flash','gemini-2.5-flash','gemini-2.0-flash-lite'];
+let aiHist=[],aiBusy=false;
+const aiSys=()=>`Eres el asistente de Ficha, una app de tarjetas de estudio (flashcards) para el examen de admisión UNSCH 2026-Complementario. Hablas español, breve y claro.
+Áreas y cursos del temario: ${TEMARIO.map(x=>x.a+': '+x.c.map(c=>c.n).join(', ')).join(' · ')}.
+Hoy es ${DIA_NOMBRE[new Date().getDay()]} y según su plan de estudio tocan: ${ROTACION[new Date().getDay()].join(' y ')}.
+Cuando te pidan CREAR tarjetas, responde ÚNICAMENTE con las tarjetas en este formato exacto, sin introducción ni cierre:
+# [Área]
+## [Curso]
+### [Bloque o tema]
+Pregunta: ...
+Respuesta: ...
+(una línea en blanco entre tarjetas; una sola idea por tarjeta; preguntas de calidad de examen de admisión: definiciones, diferencias, ejemplos, casos y errores frecuentes).
+Cuando te pidan EXPLICAR algo, responde en lenguaje simple, máximo 6 líneas, con un ejemplo. No crees tarjetas si no te las piden.`;
+async function gemCall(messages){
+ const key=(S.gemKey||'').trim();if(!key)throw new Error('Primero pega tu clave gratuita de Gemini.');
+ const first=S.gemModel||'gemini-2.0-flash',models=[first,...GEM_FALLBACK.filter(m=>m!==first)];let lastErr=null;
+ for(const model of models){
+  const ctl=new AbortController(),to=setTimeout(()=>ctl.abort(),90000);
+  try{
+   const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`,{method:'POST',signal:ctl.signal,headers:{'Content-Type':'application/json'},body:JSON.stringify({systemInstruction:{parts:[{text:aiSys()}]},contents:messages,generationConfig:{temperature:0.7,maxOutputTokens:8192}})});
+   clearTimeout(to);
+   if(r.status===404){lastErr=new Error('modelo');continue}
+   const j=await r.json().catch(()=>null);
+   if(!r.ok)throw new Error((j&&j.error&&j.error.message)||('Error '+r.status));
+   const txt=((j&&j.candidates&&j.candidates[0]&&j.candidates[0].content&&j.candidates[0].content.parts)||[]).map(p=>p.text||'').join('').trim();
+   if(!txt)throw new Error('La IA no devolvió texto. Intenta de nuevo.');
+   if(model!==first){S.gemModel=model;saveS()}
+   return txt;
+  }catch(e){clearTimeout(to);if(e&&e.message==='modelo'){lastErr=e;continue}if(e&&e.name==='AbortError')throw new Error('La IA tardó demasiado. Revisa tu internet e intenta de nuevo.');throw e}
+ }
+ throw new Error('No se encontró el modelo de IA. Revisa el modelo en Progreso → Ajustes.')}
+function aiBubble(role,text){
+ const kids=[el('div',{},text)];
+ if(role==='a'){const r=parseFlex(text);if(r.out.length)kids.push(el('div',{class:'row',style:'margin-top:8px'},btn(`Guardar estas ${r.out.length} tarjetas`,()=>aiSave(text),'pri')))}
+ return el('div',{class:'aimsg '+role},...kids)}
+function aiSetup(){return el('div',{},
+ el('p',{},'El asistente usa la IA gratuita de Google (Gemini). Necesitas una clave gratuita: se pega una sola vez y queda guardada solo en este navegador. Nunca la compartas.'),
+ el('ol',{style:'margin:0 0 12px 20px;line-height:1.7'},el('li',{},'Toca «Abrir Google AI Studio» e inicia sesión con tu cuenta de Google.'),el('li',{},'Toca «Get API key» y luego «Create API key».'),el('li',{},'Copia la clave, vuelve aquí, pégala abajo y toca «Guardar clave».')),
+ el('div',{class:'row',style:'margin-bottom:12px'},el('a',{class:'btn',href:'https://aistudio.google.com/apikey',target:'_blank',rel:'noopener'},'Abrir Google AI Studio')),
+ el('label',{class:'fld'},'Tu clave de Gemini',el('input',{id:'aiKeyIn',type:'password',placeholder:'Pega tu clave aquí',autocomplete:'off'})),
+ el('div',{class:'row'},btn('Guardar clave',()=>{const v=$('#aiKeyIn').value.trim();if(!v)return toast('Pega la clave primero');S.gemKey=v;saveS();aiRender();toast('Asistente activado')},'pri')))}
+function aiRender(){const b=$('#aiBody');if(!b)return;
+ if(!(S.gemKey||'').trim()){b.replaceChildren(aiSetup());return}
+ const c=current();
+ const chips=[btn('📚 Crear tarjetas de hoy',aiGenToday,'chip'),btn('🎯 Preguntas de mis fallos',aiGenFails,'chip')];
+ if(c)chips.push(btn('❓ Explícame esta tarjeta',aiExplainCard,'chip'));
+ const log=el('div',{class:'ailog',id:'aiLog'},
+  ...(aiHist.length?aiHist.map(m=>aiBubble(m.role,m.text)):[el('div',{class:'aimsg a'},'¡Hola! Soy tu asistente de estudio. Puedo crear las tarjetas de hoy, explicarte un tema con palabras simples o hacerte preguntas de refuerzo de lo que más fallas. Toca una opción o escríbeme.')]));
+ const inp=el('input',{id:'aiIn',type:'text',placeholder:'Escribe tu pedido…',autocomplete:'off'});
+ inp.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();aiSend()}};
+ b.replaceChildren(el('div',{class:'chips',style:'margin-bottom:12px'},...chips),log,
+  el('div',{class:'airow'},inp,btn('Enviar',aiSend,'pri')));
+ log.scrollTop=log.scrollHeight}
+function aiPush(role,text){aiHist.push({role,text});const log=$('#aiLog');if(log){log.append(aiBubble(role,text));log.scrollTop=log.scrollHeight}}
+async function aiAsk(prompt,withHist){
+ if(aiBusy)return;aiBusy=true;
+ const wait=el('div',{class:'aimsg a'},'Escribiendo…');const log=$('#aiLog');if(log){log.append(wait);log.scrollTop=log.scrollHeight}
+ try{
+  const base=withHist?aiHist.slice(-8):[];const msgs=base.map(m=>({role:m.role==='u'?'user':'model',parts:[{text:m.text}]}));
+  if(!base.length||base[base.length-1].text!==prompt)msgs.push({role:'user',parts:[{text:prompt}]});
+  const txt=await gemCall(msgs);wait.remove();aiPush('a',txt);return txt;
+ }catch(e){wait.remove();aiPush('a','⚠️ '+(e&&e.message?e.message:'Algo salió mal. Intenta de nuevo.'));return null}
+ finally{aiBusy=false}}
+function aiSend(){const i=$('#aiIn');if(!i)return;const t=i.value.trim();if(!t||aiBusy)return;i.value='';aiPush('u',t);aiAsk(t,true)}
+async function aiGenToday(){
+ if(aiBusy)return;const cursos=ROTACION[new Date().getDay()];
+ aiPush('u','Crear tarjetas de hoy ('+cursos.join(' y ')+')');
+ for(const n of cursos){const prev=ezSel;ezSel=new Set([n]);const p=ezPromptText();ezSel=prev;
+  aiPush('a','Generando las tarjetas de '+n+'…');
+  await aiAsk(p,false)}}
+function aiGenFails(){
+ if(aiBusy)return;const f=failedToday(),t=cards.filter(c=>(c.failCount||0)>=3),all=[...new Map([...f,...t].map(c=>[c.id,c])).values()];
+ if(!all.length){aiPush('u','Preguntas de mis fallos');aiPush('a','Todavía no tienes fallos registrados. Primero estudia una sesión: lo que marques «No sabía nada» o «Más o menos» quedará registrado y podré reforzarlo aquí.');return}
+ aiPush('u','Preguntas de mis fallos');
+ const lista=all.slice(0,12).map((c,i)=>`${i+1}. [${c.category}] ${c.question}`).join('\n');
+ aiAsk(`Estas son las tarjetas que más me cuestan:\n${lista}\n\nCrea tarjetas NUEVAS de refuerzo sobre esos mismos temas (no repitas las mismas preguntas), en el formato de tarjetas.`,false)}
+function aiExplainCard(){
+ const c=current();if(!c||aiBusy)return;aiPush('u','Explícame esta tarjeta');
+ aiAsk(`Explícame en lenguaje simple, con un ejemplo, esta tarjeta:\nPregunta: ${c.question}\nRespuesta: ${c.answer}`,false)}
+function aiSave(text){
+ const r=parseFlex(text);if(!r.out.length)return toast('No detecté tarjetas en esa respuesta');
+ $('#aiDlg').close();go('add');const t=$('#ezInput');t.value=text;ezValidate();ezPreview();
+ setTimeout(()=>{const pv=$('#ezPreview');if(pv)pv.scrollIntoView({behavior:'smooth',block:'start'})},80)}
+$('#aiFab').onclick=()=>{aiRender();$('#aiDlg').showModal()};
+$('#aiClose').onclick=()=>$('#aiDlg').close();
+
 /* ===== 9. Progreso, ajustes y copias ===== */
 function download(text,name){const a=el('a',{href:URL.createObjectURL(new Blob([text],{type:'application/json'})),download:name});a.click();URL.revokeObjectURL(a.href)}
 function renderStats(){const root=$('#v-stats'),m=dayCounts(),today=reviewsOn(dayKey(new Date())),dueN=cards.filter(isDue).length,total=[...m.values()].reduce((a,b)=>a+b,0);
@@ -770,6 +872,8 @@ function renderStats(){const root=$('#v-stats'),m=dayCounts(),today=reviewsOn(da
    el('label',{class:'fld chk'},el('input',{type:'checkbox',checked:S.typed,onchange:e=>{S.typed=e.target.checked;saveS()}}),'Escribir mi respuesta antes de voltear'),
    el('label',{class:'fld chk'},el('input',{type:'checkbox',checked:S.warm,onchange:e=>{S.warm=e.target.checked;saveS()}}),'Calentamiento de 5 minutos con los fallos de ayer'),
    el('label',{class:'fld chk'},el('input',{type:'checkbox',checked:S.learn!==false,onchange:e=>{S.learn=e.target.checked;saveS()}}),'Modo intensivo: toda tarjeta vuelve en la sesión hasta acertarla 2 veces seguidas; solo «Lo sabía al toque» sale al instante')),
+   el('label',{class:'fld'},'Clave de Gemini (asistente IA)',el('input',{type:'password',value:S.gemKey||'',placeholder:'Sin configurar',autocomplete:'off',onchange:e=>{S.gemKey=e.target.value.trim();saveS();toast('Clave guardada')}})),
+   el('label',{class:'fld'},'Modelo de Gemini',el('input',{type:'text',value:S.gemModel||'gemini-2.0-flash',onchange:e=>{S.gemModel=e.target.value.trim()||'gemini-2.0-flash';saveS();toast('Modelo guardado')}})),
   el('div',{class:'panel'},el('h2',{},'Copia de seguridad'),fileBlock(),el('p',{class:'mut',style:'margin-bottom:12px'},'Además se guardan en este navegador. Exporta una copia con regularidad.'),
    el('div',{class:'row'},btn('Exportar JSON',doExport),btn('Importar JSON',()=>$('#file').click()))));
  wrap.scrollLeft=wrap.scrollWidth}
