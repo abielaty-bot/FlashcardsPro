@@ -185,6 +185,10 @@ fieldset{border:0;padding:0;display:grid;gap:var(--s2)}legend{font:600 var(--t-s
 .aimsg.a{align-self:flex-start;background:var(--surface-2);border:1px solid var(--line)}
 .airow{display:flex;gap:8px}.airow input{flex:1}
 @media (min-width:900px){.aifab{bottom:24px}}
+body.simple .nv[data-v="lib"],body.simple .nv[data-v="sug"]{display:none}
+body.simple #advWrap{display:none}
+.daypanel{border:2px solid var(--accent);text-align:center}
+.btn.big{font-size:1.12rem;padding:15px 20px;width:100%}
 </style></head><body>
 <a class="skip" href="#main">Saltar al contenido</a>
 <div class="app">
@@ -369,11 +373,14 @@ function fileBlock(){
 
 /* ===== 3. Repetición espaciada (SM-2 simplificado) ===== */
 const RATES=[['again','No sabía nada'],['hard','Más o menos'],['good','Lo sabía'],['easy','Lo sabía al toque']];
-function schedule(c,r){const i=c.interval,e=c.ease,good=i<1?2:i<2?3:Math.round(i*e);
- if(r==='again')return{interval:0,ease:clampE(e-.2)};
- if(r==='hard')return{interval:Math.min(good-1||1,Math.max(1,Math.round(Math.max(i,1)*1.2))),ease:clampE(e-.15)};
- if(r==='good')return{interval:good,ease:e};
- return{interval:Math.max(i<1?4:Math.round(i*e*1.3),good+1),ease:clampE(e+.15)}}
+const EXAM_DIA=new Date('2026-11-22T00:00:00');
+function examCap(iv){if(!iv)return iv;const now=new Date();if(now>=EXAM_DIA)return iv;const left=Math.floor((EXAM_DIA-now)/DAY);return Math.max(0,Math.min(iv,left))}
+function schedule(c,r){const i=c.interval,e=c.ease,good=i<1?2:i<2?3:Math.round(i*e);let out;
+ if(r==='again')out={interval:0,ease:clampE(e-.2)};
+ else if(r==='hard')out={interval:Math.min(good-1||1,Math.max(1,Math.round(Math.max(i,1)*1.2))),ease:clampE(e-.15)};
+ else if(r==='good')out={interval:good,ease:e};
+ else out={interval:Math.max(i<1?4:Math.round(i*e*1.3),good+1),ease:clampE(e+.15)};
+ out.interval=examCap(out.interval);return out}
 function applyRating(c,r){const s=schedule(c,r),now=new Date();
  Object.assign(c,{interval:s.interval,ease:s.ease,due:new Date(now.getTime()+(s.interval?s.interval*DAY:10*60e3)).toISOString(),
   status:r==='again'||r==='hard'?'review':s.interval>=21?'mastered':'learning',lastRating:LEGACY[r],lastReviewedAt:now.toISOString()});
@@ -669,7 +676,7 @@ function ezPromptText(){ezInit();const qty={pocas:'3 a 5',normal:'6 a 10',extens
  const detalle=[...ezSel].map(n=>{const c=TODOS_CURSOS.find(x=>x.n===n);if(!c)return'';
   const temas=c.b?c.b.map(b=>` ${b.n}:\n`+b.t.map((t,i)=>`   ${i+1}. ${t}`).join('\n')).join('\n'):c.t.map((t,i)=>`  ${i+1}. ${t}`).join('\n');
   return `## ${n} (área: ${CURSO_AREA[n]})\n${temas}`}).join('\n\n');
- return `Usa únicamente el documento del temario que te subí (Temario del Examen de Admisión 2026-Complementario).\nGenera flashcards de TODOS los temas de estos cursos, en el orden indicado y sin omitir ninguno:\n\n${detalle}\n\nCantidad: ${qty} preguntas por tema.\nLas preguntas deben ser de calidad de examen de admisión: una sola idea por tarjeta; mezcla definiciones, diferencias entre conceptos, reconocimiento con ejemplos y casos de aplicación; incluye los errores o confusiones frecuentes. Evita preguntas obvias o que se respondan con una sola palabra.\n\nFORMATO EXACTO de salida, sin introducción ni cierre:\n# [Área]\n## [Curso]\n### [Bloque o tema]\nPregunta: texto de la pregunta\nRespuesta: texto de la respuesta\n\n- Una línea en blanco entre tarjetas.\n- Si el curso tiene bloques, usa ### para el nombre del bloque y #### para cada tema.\n- Si la respuesta es muy larga, envíala en partes y espera a que yo escriba «Continúa».`}
+ return `Usa SOLO el material cargado en esta libreta (el temario y los exámenes de admisión anteriores que te subí). Si un tema no aparece en ese material, NO inventes tarjetas sobre él: escribe una línea suelta que diga «SIN FUENTE: <nombre del tema>».\nPrioriza lo que las fuentes muestran que se pregunta con más frecuencia en los exámenes UNSCH.\nGenera flashcards de TODOS los temas de estos cursos, en el orden indicado y sin omitir ninguno (salvo los que marques SIN FUENTE):\n\n${detalle}\n\nCantidad: ${qty} preguntas por tema.\nLas preguntas deben ser de calidad de examen de admisión: una sola idea por tarjeta; respuesta BREVE, de máximo 2 líneas; mezcla definiciones, diferencias entre conceptos, reconocimiento con ejemplos y casos de aplicación; incluye los errores o confusiones frecuentes. Evita preguntas obvias o que se respondan con una sola palabra.\nAl final de cada respuesta, agrega entre paréntesis la fuente: (Fuente: <nombre del documento>; si sabes la página: pág. X).\n\nFORMATO EXACTO de salida, sin introducción ni cierre:\n# [Área]\n## [Curso]\n### [Bloque o tema]\nPregunta: texto de la pregunta\nRespuesta: texto de la respuesta\n\n- Una línea en blanco entre tarjetas.\n- Si el curso tiene bloques, usa ### para el nombre del bloque y #### para cada tema.\n- Si la respuesta es muy larga, envíala en partes y espera a que yo escriba «Continúa».`}
 function renderEz(){ezInit();const hoy=new Date().getDay();
  $('#ezDays').replaceChildren(...ORDEN_DIAS.map(d=>{const act=ezSel.size===ROTACION[d].length&&ROTACION[d].every(n=>ezSel.has(n));
   return el('button',{class:'btn ezday',type:'button','aria-pressed':String(act),onclick:()=>{ezSel=new Set(ROTACION[d]);renderEz()}},
@@ -777,7 +784,7 @@ Cuando te pidan CREAR tarjetas, responde ÚNICAMENTE con las tarjetas en este fo
 Pregunta: ...
 Respuesta: ...
 (una línea en blanco entre tarjetas; una sola idea por tarjeta; preguntas de calidad de examen de admisión: definiciones, diferencias, ejemplos, casos y errores frecuentes).
-Cuando te pidan EXPLICAR algo, responde en lenguaje simple, máximo 6 líneas, con un ejemplo. No crees tarjetas si no te las piden.`;
+Cuando te pidan EXPLICAR algo, responde en lenguaje simple, máximo 6 líneas, con un ejemplo. No crees tarjetas si no te las piden.\nAl crear tarjetas: respuestas de máximo 2 líneas; prioriza lo más preguntado en exámenes de admisión UNSCH; si no estás seguro de un dato, no lo conviertas en tarjeta.`;
 async function gemCall(messages){
  const key=(S.gemKey||'').trim();if(!key)throw new Error('Primero pega tu clave gratuita de Gemini.');
  const tried=new Set(),queue=[],push=m=>{if(m&&!tried.has(m)&&!queue.includes(m))queue.push(m)};
@@ -833,6 +840,21 @@ async function aiAsk(prompt,withHist){
  }catch(e){wait.remove();aiPush('a','⚠️ '+(e&&e.message?e.message:'Algo salió mal. Intenta de nuevo.'));return null}
  finally{aiBusy=false}}
 function aiSend(){const i=$('#aiIn');if(!i)return;const t=i.value.trim();if(!t||aiBusy)return;i.value='';aiPush('u',t);aiAsk(t,true)}
+function saveParsedAuto(txt){const out=parseFlex(txt).out;if(!out.length)return 0;const k=new Set(cards.map(c=>norm(c.question)+'|'+norm(c.answer))),seen=new Set();const n=out.filter(c=>{const x=norm(c.question)+'|'+norm(c.answer);if(k.has(x)||seen.has(x))return false;seen.add(x);return true}).map(c=>clean({category:catOf(segs(c.category).join(SEP)),question:c.question,answer:c.answer}));if(!n.length)return 0;cards.push(...n);save();return n.length}
+async function genCourseCards(course){const prev=ezSel;ezSel=new Set([course]);const p=ezPromptText();ezSel=prev;const txt=await gemCall([{role:'user',parts:[{text:p}]}]);return saveParsedAuto(txt)}
+function courseCardCount(n){return cards.filter(c=>segs(c.category)[1]===n).length}
+let dayMsg='';
+async function startDay(){startToday();
+ const st=t=>{dayMsg=t;const e=$('#dayStatus');if(e)e.textContent=t};
+ if(!(S.gemKey||'').trim()){st('Estudiando lo que ya tienes. Cuando el asistente esté activo, también prepararé tus tarjetas nuevas de cada día.');return}
+ const missing=ROTACION[new Date().getDay()].filter(n=>courseCardCount(n)===0);
+ if(!missing.length){toast('Tus cursos de hoy ya tienen tarjetas. ¡A estudiar!');return}
+ st('✨ Preparando las tarjetas de '+missing.join(' y ')+'… Sigue estudiando; te aviso cuando estén listas.');
+ let made=0;for(const n of missing){try{made+=await genCourseCards(n)}catch(err){}}
+ if(made){toast(`✨ ${made} tarjetas nuevas de hoy están listas. Al terminar esta sesión, toca «Empezar mi día» otra vez para estudiarlas.`);st('✨ Tus tarjetas nuevas de hoy ya están listas.')}
+ else st('No pude preparar tarjetas nuevas ahora (la IA no respondió). Puedes crearlas desde Agregar o con el Asistente.')}
+function dayPanel(root){if(!root||root.querySelector('.daypanel'))return;const b=el('button',{class:'btn pri big',type:'button',onclick:startDay},'▶ Empezar mi día');root.prepend(el('div',{class:'panel daypanel'},el('h2',{},'Tu día de estudio'),el('p',{class:'mut'},'Toca el botón y estudia tus repasos y tarjetas de hoy. Si el asistente está activo, preparo tus tarjetas nuevas mientras estudias.'),b,el('p',{class:'mut',id:'dayStatus',style:'margin-top:10px'},dayMsg)))}
+function applySimple(){document.body.classList.toggle('simple',!!S.simple)}
 async function aiGenToday(){
  if(aiBusy)return;const cursos=ROTACION[new Date().getDay()];
  aiPush('u','Crear tarjetas de hoy ('+cursos.join(' y ')+')');
@@ -876,6 +898,7 @@ function renderStats(){const root=$('#v-stats'),m=dayCounts(),today=reviewsOn(da
    el('label',{class:'fld chk'},el('input',{type:'checkbox',checked:S.typed,onchange:e=>{S.typed=e.target.checked;saveS()}}),'Escribir mi respuesta antes de voltear'),
    el('label',{class:'fld chk'},el('input',{type:'checkbox',checked:S.warm,onchange:e=>{S.warm=e.target.checked;saveS()}}),'Calentamiento de 5 minutos con los fallos de ayer'),
    el('label',{class:'fld chk'},el('input',{type:'checkbox',checked:S.learn!==false,onchange:e=>{S.learn=e.target.checked;saveS()}}),'Modo intensivo: toda tarjeta vuelve en la sesión hasta acertarla 2 veces seguidas; solo «Lo sabía al toque» sale al instante')),
+   el('label',{class:'fld chk'},el('input',{type:'checkbox',checked:!!S.simple,onchange:e=>{S.simple=e.target.checked;saveS();applySimple();render();toast(S.simple?'Modo simple activado':'Modo simple desactivado')}}),'Modo simple: solo lo esencial para estudiar (oculta Mazos, Sugerencias y el modo avanzado)'),
    el('label',{class:'fld'},'Clave de Gemini (asistente IA)',el('input',{type:'password',value:S.gemKey||'',placeholder:'Sin configurar',autocomplete:'off',onchange:e=>{S.gemKey=e.target.value.trim();saveS();toast('Clave guardada')}})),
    el('label',{class:'fld'},'Modelo de Gemini',el('input',{type:'text',value:S.gemModel||'gemini-3.8-flash',onchange:e=>{S.gemModel=e.target.value.trim()||'gemini-3.8-flash';saveS();toast('Modelo guardado')}})),
   el('div',{class:'panel'},el('h2',{},'Copia de seguridad'),fileBlock(),el('p',{class:'mut',style:'margin-bottom:12px'},'Además se guardan en este navegador. Exporta una copia con regularidad.'),
@@ -917,7 +940,8 @@ $$('#nav .nv').forEach(b=>b.onclick=()=>go(b.dataset.v));
 function render(){if(loadError)view='study';if(deck!==ROOT&&((deck===FOLL&&!failedToday().length)||(deck!==FOLL&&!allFolders().includes(deck))))deck=ROOT;
  if(S.lastDeck!==deck){S.lastDeck=deck;saveS()}$('#folderList').replaceChildren(...allFolders().map(v=>el('option',{value:v})));renderBanner();
  $$('main>section').forEach(s=>s.hidden=s.id!=='v-'+view);$$('#nav .nv').forEach(b=>b.dataset.v===view?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current'));
- ({study:renderStudy,lib:renderLib,add:()=>{renderAdd();renderEz()},stats:renderStats,sug:renderSug})[view]()}
+ applySimple();({study:renderStudy,lib:renderLib,add:()=>{renderAdd();renderEz()},stats:renderStats,sug:renderSug})[view]();if(view==='study'&&S.simple&&!session)dayPanel($('#v-study'))}
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persisted().then(p=>{if(!p)navigator.storage.persist()})}catch(e){}
 applyTheme();matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(!S.theme)applyTheme()});
 render();initFile();
 </script></body></html>
