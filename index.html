@@ -189,6 +189,21 @@ body.simple .nv[data-v="lib"],body.simple .nv[data-v="sug"]{display:none}
 body.simple #advWrap{display:none}
 .daypanel{border:2px solid var(--accent);text-align:center}
 .btn.big{font-size:1.12rem;padding:15px 20px;width:100%}
+.wzsteps{display:flex;gap:6px;margin:2px 0 14px}
+.wzstep{flex:1;text-align:center;padding:8px 2px;border-radius:var(--r-full);border:1px solid var(--line);font-size:var(--t-xs);color:var(--muted)}
+.wzstep.on{border-color:var(--accent);color:var(--text);font-weight:700;box-shadow:0 0 0 1px var(--accent)}
+.wzstep.done{border-color:var(--ok);color:var(--ok);font-weight:600}
+.wzguide{border:2px solid var(--accent)}
+.wzchoice{width:100%;text-align:left;display:block;margin-bottom:10px}
+.wzchoice[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+#ezDays{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#ezDays .ezday{margin-bottom:0;width:auto}
+#ezCourses .chips{flex-wrap:wrap;overflow-x:visible}
+.destrow{display:flex;gap:8px;align-items:center;padding:7px 0;border-bottom:1px dashed var(--line)}
+.destrow:last-child{border-bottom:none}
+#v-add{padding-bottom:96px}
+.wznav{display:flex;gap:8px;margin-top:4px}
+.wznav .btn{flex:1}
 </style></head><body>
 <a class="skip" href="#main">Saltar al contenido</a>
 <div class="app">
@@ -205,21 +220,52 @@ body.simple #advWrap{display:none}
  <label class="row" style="align-items:center;gap:12px;min-height:44px"><input type="checkbox" id="selAll"> <span class="mut">Seleccionar todas las visibles</span></label>
  <div id="rows"></div></section>
 <section id="v-add" class="add" aria-label="Agregar" hidden>
- <div class="bar"><h1>Agregar con IA</h1></div>
- <div class="panel"><h2>1 · Elige el día o los cursos</h2>
+ <div class="bar"><h1>Agregar con IA</h1><button class="btn" id="wzHelp" type="button">? Guía</button></div>
+ <div class="wzsteps" aria-label="Pasos para agregar tarjetas">
+  <div class="wzstep on" id="wzS1">1 · Qué estudiar</div>
+  <div class="wzstep" id="wzS2">2 · Cómo crearlas</div>
+  <div class="wzstep" id="wzS3">3 · Revisa y guarda</div></div>
+ <div class="panel wzguide" id="wzGuide" hidden>
+  <h2>¿Primera vez aquí? 👋</h2>
+  <p style="margin-bottom:10px">No tienes que saber de carpetas ni de formatos. Tú solo eliges el curso: <b>la app guarda cada tarjeta en su curso, sola</b>.</p>
+  <p class="mut" style="margin-bottom:10px"><b>Ejemplo:</b> si eliges <b>Literatura → Teoría literaria</b>, tus tarjetas quedan guardadas así:<br>📚 Comunicación › Literatura › Teoría literaria<br>y las encuentras en <b>Mazos</b>, dentro de Literatura.</p>
+  <div id="wzExample" hidden>
+   <div class="prompt" style="margin-bottom:10px">Pregunta: ¿Qué es la teoría literaria?
+Respuesta: Es el estudio de los principios y conceptos que explican qué es la literatura y cómo se analiza una obra.</div>
+   <p class="mut" style="margin-bottom:10px">Esa tarjeta se guardaría sola en 📚 Comunicación › Literatura › Teoría literaria. Así de simple, en los 3 pasos de arriba.</p></div>
+  <div class="row"><button class="btn pri" id="wzExBtn" type="button">Ver un ejemplo armado</button><button class="btn" id="wzOkBtn" type="button">Ya sé cómo es</button></div></div>
+ <div id="wzStep1">
+  <button class="btn pri big" id="wzToday" type="button" style="margin-bottom:12px">⚡ Repetir lo de hoy</button>
+  <div class="panel"><h2>¿Qué quieres estudiar?</h2>
+  <p class="mut" style="margin-bottom:10px">Toca un día o ajusta los cursos a tu gusto. Los de hoy ya vienen elegidos.</p>
   <div id="ezDays"></div>
   <div id="ezCourses"></div>
   <label class="fld" style="margin-top:12px">Cantidad de preguntas por tema<select id="ezQty"><option value="pocas">Pocas (3 a 5)</option><option value="normal" selected>Normal (6 a 10)</option><option value="extenso">Muchas (12 a 20)</option></select></label></div>
- <div class="panel"><h2>2 · Copia el pedido y pégalo en NotebookLM</h2>
-  <p class="mut" style="margin-bottom:12px">Primero sube tu documento del temario a NotebookLM. Luego copia este pedido, pégalo allá y espera su respuesta.</p>
-  <div class="prompt" id="ezPrompt"></div>
-  <div class="row"><button class="btn pri" id="ezCopy" type="button">Copiar pedido</button><a class="btn" href="https://notebooklm.google.com" target="_blank" rel="noopener">Abrir NotebookLM</a></div></div>
- <div class="panel"><h2>3 · Pega aquí lo que te dio NotebookLM</h2>
-  <p class="mut" style="margin-bottom:12px">Pega la respuesta completa. Si NotebookLM la dio por partes, pega la parte 1 y luego la parte 2 debajo, sin borrar lo anterior.</p>
-  <textarea id="ezInput" aria-label="Respuesta de NotebookLM" placeholder="Pega aquí la respuesta de NotebookLM…"></textarea>
+  <div class="panel"><h2>Dónde se guardarán</h2>
+  <p class="mut" style="margin-bottom:6px">No escribes ninguna carpeta: cada tarjeta se guarda sola en su curso.</p>
+  <div id="wzDestList"></div>
+  <p class="mut" style="margin-top:8px">Ejemplo: 📚 Comunicación › Literatura › Teoría literaria</p></div>
+  <div class="wznav"><button class="btn pri" id="wzGo2" type="button">Continuar ›</button></div></div>
+ <div id="wzStep2" hidden>
+  <div class="panel"><h2>¿Cómo las creamos?</h2>
+  <button class="btn wzchoice" id="wzPathAi" type="button" aria-pressed="false"><b>✨ Que las cree el Asistente</b><br><span class="mut">La IA de la app las hace por ti, sin salir de aquí. Es lo más fácil.</span></button>
+  <button class="btn wzchoice" id="wzPathNb" type="button" aria-pressed="false"><b>📓 Traer de NotebookLM</b><br><span class="mut">Si ya subiste tu temario a NotebookLM, copia el pedido, pégalo allá y trae su respuesta.</span></button>
+  <div id="wzAiPanel" hidden>
+   <p class="mut" style="margin:10px 0">Toca el botón y pídele las tarjetas de hoy. Cuando te las dé, toca «Guardar estas tarjetas» en su respuesta y llegarás sola al paso 3 para revisarlas antes de guardar.</p>
+   <button class="btn pri" id="wzOpenAi" type="button">Abrir el Asistente ✨</button></div>
+  <div id="wzNbPanel" hidden>
+   <p class="mut" style="margin:10px 0 12px">Primero sube tu documento del temario a NotebookLM. Luego copia este pedido, pégalo allá y espera su respuesta.</p>
+   <div class="prompt" id="ezPrompt"></div>
+   <div class="row"><button class="btn pri" id="ezCopy" type="button">Copiar pedido</button><a class="btn" href="https://notebooklm.google.com" target="_blank" rel="noopener">Abrir NotebookLM</a></div></div></div>
+  <div class="wznav"><button class="btn" id="wzBack1" type="button">‹ Atrás</button><button class="btn pri" id="wzGo3" type="button" hidden>Ya tengo el texto, continuar ›</button></div></div>
+ <div id="wzStep3" hidden>
+  <div class="panel"><h2>Pega el texto y revisa</h2>
+  <p class="mut" style="margin-bottom:12px">Pega la respuesta completa. Si te la dieron por partes, pega la parte 1 y luego la parte 2 debajo, sin borrar lo anterior. La app ordena cada tarjeta en su curso sola.</p>
+  <textarea id="ezInput" aria-label="Texto con tarjetas para guardar" placeholder="Pega aquí el texto con las tarjetas…"></textarea>
   <div id="ezVal" aria-live="polite"></div>
   <div class="row"><button class="btn pri" id="ezCreate" type="button" disabled>Ver mis tarjetas</button><button class="btn" id="ezClear" type="button">Limpiar</button></div></div>
- <div id="ezPreview" aria-live="polite"></div>
+  <div id="ezPreview" aria-live="polite"></div>
+  <div class="wznav"><button class="btn" id="wzBack2" type="button">‹ Atrás</button></div></div>
  <details id="advWrap"><summary style="min-height:44px;cursor:pointer;font-weight:600;padding:6px 0">Modo avanzado (NotebookLM → ChatGPT, formato estricto)</summary>
 
  <div class="panel"><details><summary style="min-height:44px;cursor:pointer;font-weight:600">Paso previo: prompt para NotebookLM</summary>
@@ -227,7 +273,7 @@ body.simple #advWrap{display:none}
   <div class="chips" id="nbChips" role="group" aria-label="Cursos sugeridos"></div>
   <label class="fld">Cantidad de preguntas por tema<select id="nbQty"><option value="pocas">Pocas</option><option value="normal" selected>Normal</option><option value="extenso">Extenso</option></select></label>
   <div class="prompt" id="nbPrompt"></div><button class="btn" id="copyNb" type="button">Copiar prompt</button></details></div>
- <div class="panel"><h2>1. Carpeta de destino</h2><label class="fld"><span class="sr">Carpeta de destino</span><input id="dest" list="folderList" maxlength="160" placeholder="Sin carpeta (o escribe una nueva: Comunicación > Lenguaje)"></label></div>
+ <div class="panel"><h2>1. ¿Dónde se guardan? (carpeta)</h2><label class="fld"><span class="sr">Carpeta de destino</span><input id="dest" list="folderList" maxlength="160" placeholder="Ejemplo: Comunicación > Lenguaje > Fonología"></label><p class="mut" style="margin-top:8px">Guía: escribe la ruta con « > » entre niveles, como en el ejemplo. Si lo dejas vacío, las tarjetas van a la carpeta que indique el propio texto pegado (su línea BLOQUE:).</p></div>
  <div class="panel"><details><summary style="min-height:44px;cursor:pointer;font-weight:600">2. Copia este prompt y pégalo en ChatGPT</summary><div class="prompt" id="prompt"></div><button class="btn" id="copyPrompt" type="button">Copiar prompt</button></details></div>
  <div class="panel"><h2>3. Pega el resultado</h2><textarea id="input" aria-label="Tarjetas en formato BLOQUE, P y R" placeholder="BLOQUE: Comunicación > Razonamiento Verbal > Etimología&#10;P: Pregunta&#10;R: Respuesta"></textarea><div id="validation" aria-live="polite"></div><div class="row"><button class="btn pri" id="create" type="button" disabled>Ver vista previa</button><button class="btn" id="clear" type="button">Limpiar</button></div></div>
  <div id="preview" aria-live="polite"></div> </details></section>
@@ -241,7 +287,7 @@ body.simple #advWrap{display:none}
 <button id="aiFab" class="aifab" type="button">✨ Asistente</button>
 <dialog id="aiDlg" aria-labelledby="aiT"><div class="aihead"><h2 id="aiT">Asistente de Ficha</h2><button class="ic" id="aiClose" type="button" aria-label="Cerrar asistente">✕</button></div><div id="aiBody"></div></dialog>
 <dialog id="dlg" aria-labelledby="dlgT"><form method="dialog"><h2 id="dlgT"></h2>
- <label>Carpeta (usa " > " entre niveles)<input id="fDeck" list="deckList" maxlength="160"></label><datalist id="deckList"></datalist>
+ <label>Curso / tema donde se guarda (ejemplo: Comunicación > Literatura > Teoría literaria)<input id="fDeck" list="deckList" maxlength="160"></label><datalist id="deckList"></datalist>
  <label>Pregunta<textarea id="fQ" rows="3" maxlength="1000" required></textarea></label>
  <label>Respuesta<textarea id="fA" rows="4" maxlength="3000" required></textarea></label>
  <label>Nota propia (opcional, se ve al voltear)<textarea id="fN" rows="2" maxlength="1000"></textarea></label>
@@ -322,7 +368,7 @@ function clean(c){
 const SUGCATS=['Diseño','Funciones','Otra'];
 function cleanSug(x){if(!x||typeof x!=='object')return null;const t=String(x.text||'').trim().slice(0,500);if(!t)return null;
  return{id:String(x.id||uid()),text:t,cat:SUGCATS.includes(x.cat)?x.cat:'Otra',at:/^\d{4}-\d{2}-\d{2}T/.test(String(x.at))?String(x.at):new Date().toISOString()}}
-let S={theme:null,newPerDay:10,goal:20,typed:false,lastDeck:null,savedAt:0,folders:[],warm:false,lastExportAt:0,lastFileAt:0,v4At:0,suggs:[],learn:true,gemKey:'',gemModel:'gemini-3.8-flash'};
+let S={theme:null,newPerDay:10,goal:20,typed:false,lastDeck:null,savedAt:0,folders:[],warm:false,lastExportAt:0,lastFileAt:0,v4At:0,suggs:[],learn:true,gemKey:'',gemModel:'gemini-3.8-flash',wzSeen:false};
 let fileH=null,fileState='none',wT,linkPendingH=null;
 try{Object.assign(S,JSON.parse(localStorage.getItem(KEY_S)||'{}'))}catch{}
 S.folders=(Array.isArray(S.folders)?S.folders:[]).filter(f=>typeof f==='string').map(normPath).filter(Boolean);S.v4At=S.v4At||Date.now();
@@ -683,7 +729,7 @@ function renderEz(){ezInit();const hoy=new Date().getDay();
    el('span',{},el('b',{},DIA_NOMBRE[d]),' · '+DIA_CORTO[d]),d===hoy?el('span',{class:'tag'},'Hoy'):null)}));
  $('#ezCourses').replaceChildren(...TEMARIO.flatMap(x=>[el('p',{class:'mut',style:'margin:10px 0 6px'},x.a),
   el('div',{class:'chips'},...x.c.map(c=>el('button',{class:'chip',type:'button','aria-pressed':String(ezSel.has(c.n)),onclick:()=>{ezSel.has(c.n)?ezSel.delete(c.n):ezSel.add(c.n);renderEz()}},c.n)))]));
- $('#ezPrompt').textContent=ezPromptText()}
+ $('#ezPrompt').textContent=ezPromptText();wzDestRender();wzApply()}
 function parseFlex(txt){let heads=[],cat=null,qq=null,a=null,ignored=0;const out=[];
  const push=()=>{if(qq&&a)out.push({category:cat||heads.slice(0,4).join(SEP)||'Sin categoría',question:qq,answer:a});else if(qq||a)ignored++;qq=a=null};
  const cleanH=s=>s.replace(/\*\*/g,'').replace(/^\s*(?:[IVX]{1,4}\.|\d+(?:\.\d+)*\.?)\s+/,'').replace(/[:：]\s*$/,'').trim();
@@ -701,22 +747,46 @@ function parseFlex(txt){let heads=[],cat=null,qq=null,a=null,ignored=0;const out
  return{out,ignored}}
 function ezValidate(){const t=$('#ezInput').value,v=$('#ezVal');$('#ezPreview').replaceChildren();ezPv=null;$('#ezCreate').disabled=!t.trim();if(!t.trim()){v.replaceChildren();return}
  ezPv=parseFlex(t);const n=ezPv.out.length;
- v.replaceChildren(el('div',{class:'msg '+(n?'ok':'err')},n?`Detecté ${n} tarjeta(s) en ${new Set(ezPv.out.map(c=>key(c))).size} carpeta(s). Toca «Ver mis tarjetas» para revisarlas.`:'Todavía no detecto tarjetas. Revisa que pegaste la respuesta completa de NotebookLM.'))}
+ v.replaceChildren(el('div',{class:'msg '+(n?'ok':'err')},n?`Detecté ${n} tarjeta(s) en ${new Set(ezPv.out.map(c=>key(c))).size} grupo(s). Toca «Ver mis tarjetas» para revisarlas.`:'Todavía no detecto tarjetas. Revisa que pegaste la respuesta completa de NotebookLM.'))}
 function ezPreview(){if(!ezPv||!ezPv.out.length)return;const r=ezPv,k=new Set(cards.map(c=>norm(c.question)+'|'+norm(c.answer))),seen=new Set(),g=new Map(),ex=new Set(allFolders());
  r.out.forEach(c=>{const x=norm(c.question)+'|'+norm(c.answer);c.dup=k.has(x)||seen.has(x);seen.add(x);const f=segs(c.category).join(SEP);(g.get(f)||g.set(f,[]).get(f)).push(c)});
  const nw=r.out.filter(c=>!c.dup).length;
  $('#ezPreview').replaceChildren(el('div',{class:'panel',role:'region','aria-label':'Vista previa'},el('h2',{},'Tus tarjetas'),
-  el('p',{style:'margin-bottom:12px'},`Se crearán ${nw} tarjetas nuevas en ${g.size} carpeta(s).`+(r.out.length-nw?` ${r.out.length-nw} ya existían y se omitirán.`:'')+(r.ignored?` ${r.ignored} línea(s) no se pudieron convertir y se ignoraron.` :'')),
-  ...[...g].sort((a,b)=>a[0].localeCompare(b[0],'es')).map(([f,l])=>{const d=l.filter(c=>c.dup).length;return el('details',{style:`margin-left:${(f.split(SEP).length-1)*12}px`},el('summary',{style:'min-height:44px;cursor:pointer'},`${ex.has(f)?'':'Nueva · '}${f} — ${l.length-d} nuevas${d?`, ${d} repetidas`:''}`),el('ul',{class:'pv'},...l.map(c=>el('li',{},c.question+' ',c.dup?el('b',{class:'tag'},'repetida'):null))))}),
+  el('p',{style:'margin-bottom:12px'},`Se crearán ${nw} tarjetas nuevas en ${g.size} grupo(s).`+(r.out.length-nw?` ${r.out.length-nw} ya existían y se omitirán.`:'')+(r.ignored?` ${r.ignored} línea(s) no se pudieron convertir y se ignoraron.` :'')),
+  ...[...g].sort((a,b)=>a[0].localeCompare(b[0],'es')).map(([f,l])=>{const d=l.filter(c=>c.dup).length;return el('details',{style:`margin-left:${(f.split(SEP).length-1)*12}px`},el('summary',{style:'min-height:44px;cursor:pointer'},`${ex.has(f)?'':'Nueva · '}${f.split(SEP).join(' › ')} — ${l.length-d} nuevas${d?`, ${d} repetidas`:''}`),el('ul',{class:'pv'},...l.map(c=>el('li',{},c.question+' ',c.dup?el('b',{class:'tag'},'repetida'):null))))}),
   el('div',{class:'row'},el('button',{class:'btn pri',type:'button',disabled:!nw,onclick:ezConfirm},`Crear las ${nw} tarjetas`),btn('Cancelar',()=>$('#ezPreview').replaceChildren()))))}
 function ezConfirm(){if(!ezPv)return;const k=new Set(cards.map(c=>norm(c.question)+'|'+norm(c.answer))),seen=new Set();
  const n=ezPv.out.filter(c=>{const x=norm(c.question)+'|'+norm(c.answer);if(k.has(x)||seen.has(x))return false;seen.add(x);return true}).map(c=>clean({category:catOf(segs(c.category).join(SEP)),question:c.question,answer:c.answer}));
- if(!n.length)return;cards.push(...n);save();$('#ezInput').value='';ezValidate();go('study');toast(`${n.length} tarjetas agregadas`)}
+ if(!n.length)return;cards.push(...n);save();$('#ezInput').value='';ezValidate();wzGo(1);go('study');toast(`${n.length} tarjetas agregadas`)}
 $('#ezQty').onchange=renderEz;
 $('#ezCopy').onclick=()=>copyText($('#ezPrompt').textContent);
 $('#ezInput').oninput=ezValidate;
 $('#ezClear').onclick=()=>{$('#ezInput').value='';ezValidate()};
 $('#ezCreate').onclick=ezPreview;
+
+/* ===== Asistente guiado de Agregar (v4.10): 3 pantallas, carpetas invisibles ===== */
+let wzStep=1,wzPath=null;
+function wzDestRender(){const L=$('#wzDestList');if(!L)return;ezInit();const ns=[...ezSel];
+ if(!ns.length){L.replaceChildren(el('p',{class:'mut'},'Elige al menos un curso y la app decidirá dónde guardarlas.'));return}
+ L.replaceChildren(...ns.map(n=>{const cnt=courseCardCount(n);return el('div',{class:'destrow'},el('span',{},'📚'),el('span',{},el('b',{},(CURSO_AREA[n]||'')+' › '+n),el('span',{class:'mut'},cnt?` — ya tienes ${cnt} tarjeta(s) ahí`:' — todavía sin tarjetas')))}))}
+function wzApply(){[1,2,3].forEach(i=>{const s=$('#wzStep'+i);if(s)s.hidden=i!==wzStep;const tb=$('#wzS'+i);if(tb){tb.classList.toggle('on',i===wzStep);tb.classList.toggle('done',i<wzStep)}});
+ const g=$('#wzGuide');if(g&&!g.dataset.open)g.hidden=!!S.wzSeen;
+ const ap=$('#wzAiPanel'),np=$('#wzNbPanel');if(ap)ap.hidden=wzPath!=='ai';if(np)np.hidden=wzPath!=='nb';
+ const pa=$('#wzPathAi'),pn=$('#wzPathNb');if(pa)pa.setAttribute('aria-pressed',String(wzPath==='ai'));if(pn)pn.setAttribute('aria-pressed',String(wzPath==='nb'));
+ const g3=$('#wzGo3');if(g3)g3.hidden=!wzPath}
+function wzGo(n){wzStep=n;wzApply();scrollTo(0,0)}
+function wzChoose(p){wzPath=p;wzApply()}
+$('#wzGo2').onclick=()=>{ezInit();if(!ezSel.size)return toast('Elige al menos un curso');wzGo(2)};
+$('#wzBack1').onclick=()=>wzGo(1);
+$('#wzBack2').onclick=()=>wzGo(2);
+$('#wzGo3').onclick=()=>wzGo(3);
+$('#wzPathAi').onclick=()=>wzChoose('ai');
+$('#wzPathNb').onclick=()=>wzChoose('nb');
+$('#wzOpenAi').onclick=()=>{aiRender();$('#aiDlg').showModal()};
+$('#wzToday').onclick=()=>{ezSel=new Set(ROTACION[new Date().getDay()]);renderEz();wzGo(2);toast('Listo: los cursos de hoy están elegidos')};
+$('#wzOkBtn').onclick=()=>{S.wzSeen=true;saveS();const g=$('#wzGuide');if(g){delete g.dataset.open;g.hidden=true}toast('Guía guardada. El botón «? Guía» la vuelve a mostrar')};
+$('#wzExBtn').onclick=e=>{const x=$('#wzExample');x.hidden=!x.hidden;e.currentTarget.textContent=x.hidden?'Ver un ejemplo armado':'Ocultar el ejemplo'};
+$('#wzHelp').onclick=()=>{const g=$('#wzGuide');if(g){g.dataset.open='1';g.hidden=false;g.scrollIntoView({behavior:'smooth',block:'start'})}};
 
 const COURSES=['Razonamiento Verbal','Lenguaje','Literatura','Biología','Anatomía y Fisiología','Física (fórmulas)','Química (fórmulas)','Historia Universal','Historia del Perú','Geografía y Ambiente','Economía','Formación Ciudadana','Educación Cívica','Actualidad'];
 $('#courseList').replaceChildren(...COURSES.map(n=>el('option',{value:n})));
@@ -762,9 +832,9 @@ $('#create').onclick=()=>{const r=parse($('#input').value,destFolder()),k=new Se
  r.out.forEach(c=>{const x=norm(c.question)+'|'+norm(c.answer);c.dup=k.has(x)||seen.has(x);seen.add(x);const f=segs(c.category).join(SEP);(g.get(f)||g.set(f,[]).get(f)).push(c)});pv=r;
  const nw=r.out.filter(c=>!c.dup).length;
  $('#preview').replaceChildren(el('div',{class:'panel',role:'region','aria-label':'Vista previa'},el('h2',{},'Vista previa'),
-  el('p',{style:'margin-bottom:12px'},`Se crearán ${nw} tarjetas nuevas en ${g.size} carpeta(s). ${r.out.length-nw} duplicadas se omitirán.`),
+  el('p',{style:'margin-bottom:12px'},`Se crearán ${nw} tarjetas nuevas en ${g.size} grupo(s). ${r.out.length-nw} duplicadas se omitirán.`),
   ...[...g].sort((a,b)=>a[0].localeCompare(b[0],'es')).map(([f,l])=>{const d=l.filter(c=>c.dup).length;return el('details',{style:`margin-left:${(f.split(SEP).length-1)*12}px`},
-   el('summary',{style:'min-height:44px;cursor:pointer'},`${ex.has(f)?'':'Nueva · '}${f} — ${l.length-d} nuevas${d?`, ${d} duplicadas`:''}`),el('ul',{class:'pv'},...l.map(c=>el('li',{},c.question+' ',c.dup?el('b',{class:'tag'},'duplicada'):null))))}),
+   el('summary',{style:'min-height:44px;cursor:pointer'},`${ex.has(f)?'':'Nueva · '}${f.split(SEP).join(' › ')} — ${l.length-d} nuevas${d?`, ${d} duplicadas`:''}`),el('ul',{class:'pv'},...l.map(c=>el('li',{},c.question+' ',c.dup?el('b',{class:'tag'},'duplicada'):null))))}),
   r.err.length?el('div',{class:'msg err',role:'alert'},el('b',{},'Errores de formato:'),el('ul',{class:'pv'},...r.err.slice(0,30).map(e=>el('li',{},e)))):null,
   el('div',{class:'row'},el('button',{class:'btn pri',type:'button',disabled:!!r.err.length||!nw,onclick:confirmAdd},'Confirmar y crear'),btn('Cancelar',()=>$('#preview').replaceChildren()))))};
 function confirmAdd(){if(!pv||pv.err.length)return;const n=pv.out.filter(c=>!c.dup).map(c=>clean({category:catOf(segs(c.category).join(SEP)),question:c.question,answer:c.answer})),dup=pv.out.length-n.length;
@@ -872,7 +942,7 @@ function aiExplainCard(){
  aiAsk(`Explícame en lenguaje simple, con un ejemplo, esta tarjeta:\nPregunta: ${c.question}\nRespuesta: ${c.answer}`,false)}
 function aiSave(text){
  const r=parseFlex(text);if(!r.out.length)return toast('No detecté tarjetas en esa respuesta');
- $('#aiDlg').close();go('add');const t=$('#ezInput');t.value=text;ezValidate();ezPreview();
+ $('#aiDlg').close();go('add');const t=$('#ezInput');t.value=text;ezValidate();ezPreview();wzGo(3);
  setTimeout(()=>{const pv=$('#ezPreview');if(pv)pv.scrollIntoView({behavior:'smooth',block:'start'})},80)}
 $('#aiFab').onclick=()=>{aiRender();$('#aiDlg').showModal()};
 $('#aiClose').onclick=()=>$('#aiDlg').close();
